@@ -83,7 +83,94 @@ class TestEnhanceMailAndDns:
         data = resp.json()
         assert data["imap"]["port"] == 993
         assert data["smtp"]["port"] == 465
+        assert data["incomingServer"] == "mail.rahulcloud.example"
+        assert data["outgoingServer"] == "mail.rahulcloud.example"
+        assert data["imapPort"] == 993
+        assert data["pop3Port"] == 995
+        assert data["smtpPort"] == 465
+        assert data["sslEnabled"] is True
+        assert data["protocol"] == "IMAP/POP3/SMTP"
+        assert data["authMethod"] == "normal_password"
+        assert data["encryption"] == "SSL/TLS"
         assert "authToken" in data
+
+    def test_emails_list_includes_address_and_aliases(self, client):
+        resp = client.get(
+            "/orgs/org-rahul-001/websites/site-rahul-001/emails",
+            headers=headers(),
+        )
+        assert resp.status_code == 200
+        items = resp.json()["items"]
+        assert len(items) == 2
+        assert items[0]["address"] == "hello@rahulcloud.example"
+        assert items[0]["email"] == "hello@rahulcloud.example"
+        assert items[0]["aliases"] == ["contact@rahulcloud.example"]
+
+        filtered = client.get(
+            "/orgs/org-rahul-001/websites/site-rahul-001/emails?search=contact",
+            headers=headers(),
+        )
+        assert filtered.status_code == 200
+        assert filtered.json()["total"] == 1
+        assert filtered.json()["items"][0]["address"] == "hello@rahulcloud.example"
+
+    def test_mcp_aligned_fields_on_databases_ssh_backups_and_logs(self, client):
+        mysql_dbs = client.get(
+            "/orgs/org-rahul-001/websites/site-rahul-001/mysql-dbs",
+            headers=headers(),
+        ).json()["items"][0]
+        assert {"name", "size", "createdAt", "userCount"}.issubset(mysql_dbs.keys())
+
+        mysql_users = client.get(
+            "/orgs/org-rahul-001/websites/site-rahul-001/mysql-users",
+            headers=headers(),
+        ).json()["items"][0]
+        assert mysql_users["username"] == "site_user"
+        assert isinstance(mysql_users["accessHosts"], list)
+        assert "createdAt" in mysql_users
+
+        pg_users = client.get(
+            "/orgs/org-rahul-001/websites/site-rahul-001/postgresql-users",
+            headers=headers(),
+        ).json()["items"][0]
+        assert pg_users["username"] == "site_pg_user"
+        assert isinstance(pg_users["accessHosts"], list)
+        assert "createdAt" in pg_users
+
+        ssh_key = client.get(
+            "/orgs/org-rahul-001/websites/site-rahul-001/ssh/keys",
+            headers=headers(),
+        ).json()["items"][0]
+        assert "createdAt" in ssh_key
+
+        backup_status = client.get(
+            "/orgs/org-rahul-001/websites/site-rahul-001/status/backup",
+            headers=headers(),
+        ).json()
+        assert backup_status["status"] == "completed"
+        assert backup_status["isRunning"] is False
+        assert backup_status["progress"] == 100
+        assert backup_status["step"] == "completed"
+
+        restore_status = client.get(
+            "/orgs/org-rahul-001/websites/site-rahul-001/backups/9001/restore_status",
+            headers=headers(),
+        ).json()
+        assert restore_status["status"] == "completed"
+        assert restore_status["progress"] == 100
+        assert restore_status["message"]
+
+        php_err = client.get(
+            "/websites/site-rahul-001/php_error_log",
+            headers=headers(),
+        ).json()
+        assert "Optional theme configuration is missing." in php_err["log"]
+
+        dns_rec = client.get(
+            "/orgs/org-rahul-001/websites/site-rahul-001/domains/domain-rahul-001/dns-zone",
+            headers=headers(),
+        ).json()["records"][0]
+        assert dns_rec["proxy"] is False
 
     def test_autoresponder_configured_and_unconfigured(self, client):
         configured = client.get(

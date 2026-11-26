@@ -1755,6 +1755,9 @@
             "id": "mbx-rahul-001",
             "mailboxName": "hello",
             "address": "hello@rahulcloud.example",
+            "aliases": [
+              "contact@rahulcloud.example"
+            ],
             "hasMailbox": true,
             "status": "active",
             "quota": {
@@ -1765,6 +1768,15 @@
             "passwordHash": "internal-redacted-hash-001",
             "internalNotes": "Primary mailbox with autoresponder enabled",
             "clientConf": {
+              "incomingServer": "mail.rahulcloud.example",
+              "outgoingServer": "mail.rahulcloud.example",
+              "imapPort": 993,
+              "pop3Port": 995,
+              "smtpPort": 465,
+              "sslEnabled": true,
+              "protocol": "IMAP/POP3/SMTP",
+              "authMethod": "normal_password",
+              "encryption": "SSL/TLS",
               "imap": {
                 "host": "mail.rahulcloud.example",
                 "port": 993,
@@ -1798,6 +1810,9 @@
             "id": "mbx-rahul-002",
             "mailboxName": "support",
             "address": "support@rahulcloud.example",
+            "aliases": [
+              "help@rahulcloud.example"
+            ],
             "hasMailbox": true,
             "status": "active",
             "quota": {
@@ -1808,6 +1823,15 @@
             "passwordHash": "internal-redacted-hash-002",
             "internalNotes": "Support mailbox without autoresponder",
             "clientConf": {
+              "incomingServer": "mail.rahulcloud.example",
+              "outgoingServer": "mail.rahulcloud.example",
+              "imapPort": 993,
+              "pop3Port": 995,
+              "smtpPort": 465,
+              "sslEnabled": true,
+              "protocol": "IMAP/POP3/SMTP",
+              "authMethod": "normal_password",
+              "encryption": "SSL/TLS",
               "imap": {
                 "host": "mail.rahulcloud.example",
                 "port": 993,
@@ -2088,6 +2112,7 @@
             "id": "mbx-amit-001",
             "mailboxName": "info",
             "address": "info@amitworkspace.example",
+            "aliases": [],
             "hasMailbox": true,
             "status": "active",
             "quota": {
@@ -2096,9 +2121,23 @@
             },
             "isCatchAll": false,
             "clientConf": {
+              "incomingServer": "mail.amitworkspace.example",
+              "outgoingServer": "mail.amitworkspace.example",
+              "imapPort": 993,
+              "pop3Port": 995,
+              "smtpPort": 465,
+              "sslEnabled": true,
+              "protocol": "IMAP/POP3/SMTP",
+              "authMethod": "normal_password",
+              "encryption": "SSL/TLS",
               "imap": {
                 "host": "mail.amitworkspace.example",
                 "port": 993,
+                "security": "SSL/TLS"
+              },
+              "pop3": {
+                "host": "mail.amitworkspace.example",
+                "port": 995,
                 "security": "SSL/TLS"
               },
               "smtp": {
@@ -2267,11 +2306,73 @@
         "appId": "app-neha-wp-001",
         "domainId": "domain-neha-001",
         "additionalDomainIds": [],
+        "accessInfo": {
+          "ftp": {
+            "enabled": true,
+            "protocol": "ftps",
+            "host": "ftp.nehastore.example",
+            "port": 21,
+            "username": "neha-site"
+          },
+          "ssh": {
+            "enabled": false
+          }
+        },
+        "gitDeployments": [],
+        "phpInfo": {
+          "version": "8.3",
+          "memoryLimit": "256M",
+          "maxExecutionTime": 60,
+          "uploadMaxFilesize": "64M",
+          "postMaxSize": "80M",
+          "displayErrors": false,
+          "logErrors": true
+        },
+        "phpErrorLog": [],
+        "backups": [
+          {
+            "id": "backup-neha-001",
+            "status": "completed",
+            "createdAt": "2026-11-20T01:00:00Z",
+            "completedAt": "2026-11-20T01:02:00Z",
+            "sizeBytes": 10485760
+          }
+        ],
+        "backupStatus": {
+          "status": "completed",
+          "backupId": "backup-neha-001",
+          "completedAt": "2026-11-20T01:02:00Z"
+        },
+        "restoreStatus": {
+          "status": "completed",
+          "restoreId": "restore-neha-001",
+          "backupId": "backup-neha-001",
+          "completedAt": "2026-11-20T03:00:00Z"
+        },
+        "wordpressDetails": {
+          "appId": "app-neha-wp-001",
+          "siteTitle": "Neha Digital Store",
+          "siteUrl": "https://nehastore.example",
+          "version": "6.8.3",
+          "status": "active"
+        },
+        "serverDomains": {
+          "appServerDomains": [
+            "app01.in-mock-03.milesweb.example"
+          ],
+          "emailServerDomains": [
+            "mail01.in-mock-03.milesweb.example"
+          ],
+          "dbServerDomains": [
+            "db01.in-mock-03.milesweb.example"
+          ]
+        },
         "emails": [
           {
             "id": "mbx-neha-001",
             "mailboxName": "orders",
             "address": "orders@nehastore.example",
+            "aliases": [],
             "hasMailbox": true,
             "status": "active",
             "quota": {
@@ -2280,9 +2381,23 @@
             },
             "isCatchAll": false,
             "clientConf": {
+              "incomingServer": "mail.nehastore.example",
+              "outgoingServer": "mail.nehastore.example",
+              "imapPort": 993,
+              "pop3Port": 995,
+              "smtpPort": 465,
+              "sslEnabled": true,
+              "protocol": "IMAP/POP3/SMTP",
+              "authMethod": "normal_password",
+              "encryption": "SSL/TLS",
               "imap": {
                 "host": "mail.nehastore.example",
                 "port": 993,
+                "security": "SSL/TLS"
+              },
+              "pop3": {
+                "host": "mail.nehastore.example",
+                "port": 995,
                 "security": "SSL/TLS"
               },
               "smtp": {

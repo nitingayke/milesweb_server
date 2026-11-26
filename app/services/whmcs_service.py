@@ -114,6 +114,7 @@ class WhmcsService:
                 "duedate": inv["duedate"],
                 "datepaid": inv["datepaid"],
                 "subtotal": inv["subtotal"],
+                "credit": inv.get("credit", "0.00"),
                 "tax": inv["tax"],
                 "total": inv["total"],
                 "currencycode": inv["currencycode"],

@@ -536,7 +536,16 @@ class Phase2Catalog:
         if operation == "getWebsiteDomainDnsZone":
             return {
                 "domain": website["domain"],
-                "records": [{"id": "dns-001", "kind": "A", "name": "@", "value": "198.51.100.42", "ttl": 3600}],
+                "records": [
+                    {
+                        "id": "dns-001",
+                        "kind": "A",
+                        "name": "@",
+                        "value": "198.51.100.42",
+                        "ttl": 3600,
+                        "proxy": False,
+                    }
+                ],
             }
         if operation == "getWebsiteDomainDnsQuery":
             return self._dns_query_response(customer, website, path["domain_id"], query)
@@ -581,10 +590,18 @@ class Phase2Catalog:
                 app = self._find_app(website, app_id)
                 if app and app.get("kind") != "wordpress":
                     raise CatalogBadRequest("App is not a WordPress installation")
+            wp_details = website.get("wordpressDetails") or {}
+            wp_version = wp_details.get("version", "6.7.1")
             if operation == "getWordpressInfo":
-                return {"id": website["appId"], "name": "WordPress", "url": f"https://{website['domain']}", "version": "6.7.1"}
+                return {
+                    "id": website["appId"],
+                    "name": wp_details.get("siteTitle", "WordPress"),
+                    "url": wp_details.get("siteUrl", f"https://{website['domain']}"),
+                    "version": wp_version,
+                    "status": wp_details.get("status", "active"),
+                }
             if operation == "getWordpressAppVersion":
-                return {"version": "6.7.1"}
+                return {"version": wp_version}
             if operation == "getWordpressPlugins":
                 return {"total": 1, "items": [{"name": "akismet", "status": "active", "version": "5.3", "updateAvailable": "none"}]}
             return {"total": 1, "items": [{"name": "twentytwentyfour", "status": "active", "version": "1.3", "autoUpdate": "on"}]}
@@ -598,10 +615,18 @@ class Phase2Catalog:
         if operation == "getWebsiteBackup":
             return {"id": 9001, "createdAt": "2026-11-20T01:00:00Z", "size": 10485760, "status": "completed"}
         if operation == "getWebsiteBackupStatus":
+            backup_status = website.get("backupStatus") or {}
+            status_val = backup_status.get("status", "completed")
+            if status_val == "none":
+                status_val = "idle"
             return {
                 "id": 9001,
                 "websiteId": website["id"],
+                "status": status_val,
+                "isRunning": False,
+                "progress": 100 if status_val == "completed" else 0,
                 "startedAt": "2026-11-20T01:00:00Z",
+                "step": status_val,
                 "action": "backup",
                 "homeDirStatus": "successful",
                 "mysqlDbsStatus": "successful",
@@ -609,10 +634,17 @@ class Phase2Catalog:
             }
         if operation == "getWebsiteRestoreStatus":
             b_id = int(path.get("backup_id", 9001))
+            restore_status = website.get("restoreStatus") or {}
+            status_val = restore_status.get("status", "completed")
+            if status_val == "none":
+                status_val = "idle"
             return {
                 "backupId": b_id,
+                "status": status_val,
+                "progress": 100 if status_val == "completed" else 0,
                 "startedAt": "2026-11-20T01:00:00Z",
                 "finishedAt": "2026-11-20T01:05:00Z",
+                "message": "Backup restoration completed successfully." if status_val == "completed" else "No active restore job.",
                 "homeDirStatus": "successful",
                 "mysqlDbsStatus": "successful",
                 "emailsStatus": "successful",
@@ -620,14 +652,41 @@ class Phase2Catalog:
         if operation == "getWebsiteEmails":
             emails = website.get("emails")
             if emails is not None:
-                return {
-                    "total": len(emails),
-                    "items": [
-                        {"email": m["address"], "status": m["status"], "quota": m["quota"]}
-                        for m in emails
-                    ],
-                }
-            return {"total": 1, "items": [{"email": f"hello@{website['domain']}", "status": "active", "quota": {"usage": 5242880, "total": 1073741824}}]}
+                items = [
+                    {
+                        "address": m["address"],
+                        "email": m["address"],
+                        "aliases": m.get("aliases", []),
+                        "status": m["status"],
+                        "quota": m["quota"],
+                    }
+                    for m in emails
+                ]
+            else:
+                items = [
+                    {
+                        "address": f"hello@{website['domain']}",
+                        "email": f"hello@{website['domain']}",
+                        "aliases": [],
+                        "status": "active",
+                        "quota": {"usage": 5242880, "total": 1073741824},
+                    }
+                ]
+            search = (query.get("search") or "").strip().lower()
+            if search:
+                items = [
+                    it
+                    for it in items
+                    if search in it["address"].lower()
+                    or any(search in a.lower() for a in it.get("aliases", []))
+                ]
+            try:
+                offset = max(0, int(query.get("offset", "0")))
+                limit = max(1, int(query.get("limit", "25")))
+            except ValueError:
+                offset = 0
+                limit = 25
+            return {"total": len(items), "items": items[offset : offset + limit]}
         if operation == "getWebsiteEmail":
             mailbox = self._find_mailbox(website, path["email_address"])
             if not mailbox:
@@ -637,7 +696,19 @@ class Phase2Catalog:
             mailbox = self._find_mailbox(website, path["email_address"])
             if not mailbox:
                 raise CatalogNotFound("Mailbox not found")
-            return mailbox.get("clientConf", {})
+            conf = dict(mailbox.get("clientConf", {}))
+            imap_host = (conf.get("imap") or {}).get("host") or f"mail.{website['domain']}"
+            smtp_host = (conf.get("smtp") or {}).get("host") or imap_host
+            conf.setdefault("incomingServer", imap_host)
+            conf.setdefault("outgoingServer", smtp_host)
+            conf.setdefault("imapPort", (conf.get("imap") or {}).get("port", 993))
+            conf.setdefault("pop3Port", (conf.get("pop3") or {}).get("port", 995))
+            conf.setdefault("smtpPort", (conf.get("smtp") or {}).get("port", 465))
+            conf.setdefault("sslEnabled", True)
+            conf.setdefault("protocol", "IMAP/POP3/SMTP")
+            conf.setdefault("authMethod", "normal_password")
+            conf.setdefault("encryption", "SSL/TLS")
+            return conf
         if operation == "getWebsiteEmailAutoresponder":
             mailbox = self._find_mailbox(website, path["email_address"])
             if not mailbox:
@@ -646,15 +717,65 @@ class Phase2Catalog:
         if operation == "getFtpUsers":
             return {"items": [{"account": "siteuser", "homeDir": f"/home/siteuser/{website['domain']}"}]}
         if operation == "getWebsiteMySQLDBs":
-            return {"total": 1, "items": [{"name": "site_db", "size": 12582912}]}
+            return {
+                "total": 1,
+                "items": [
+                    {
+                        "name": "site_db",
+                        "size": 12582912,
+                        "createdAt": "2025-04-01T10:00:00Z",
+                        "userCount": 1,
+                    }
+                ],
+            }
         if operation == "getWebsiteMySQLUsers":
-            return {"total": 1, "items": [{"name": "site_user", "host": "localhost"}]}
+            return {
+                "total": 1,
+                "items": [
+                    {
+                        "name": "site_user",
+                        "username": "site_user",
+                        "host": "localhost",
+                        "accessHosts": ["localhost", "127.0.0.1"],
+                        "createdAt": "2025-04-01T10:05:00Z",
+                    }
+                ],
+            }
         if operation == "getWebsitePostgresqlDbs":
-            return {"total": 1, "items": [{"name": "site_postgres", "size": 0}]}
+            return {
+                "total": 1,
+                "items": [
+                    {
+                        "name": "site_postgres",
+                        "size": 0,
+                        "createdAt": "2025-04-01T10:00:00Z",
+                        "userCount": 1,
+                    }
+                ],
+            }
         if operation == "getWebsitePostgresqlUsers":
-            return {"total": 1, "items": [{"name": "site_pg_user"}]}
+            return {
+                "total": 1,
+                "items": [
+                    {
+                        "name": "site_pg_user",
+                        "username": "site_pg_user",
+                        "accessHosts": ["localhost"],
+                        "createdAt": "2025-04-01T10:05:00Z",
+                    }
+                ],
+            }
         if operation == "getWebsiteSshKeys":
-            return {"items": [{"id": "ssh-001", "name": "deployment-key", "fingerprint": "SHA256:mockfingerprint"}]}
+            return {
+                "items": [
+                    {
+                        "id": "ssh-001",
+                        "name": "deployment-key",
+                        "fingerprint": "SHA256:mockfingerprint",
+                        "createdAt": "2025-06-15T12:00:00Z",
+                    }
+                ]
+            }
         if operation == "getWebsiteGitInfo":
             return {"repository": "https://git.example/mock/site.git", "branch": "main", "connected": True}
         if operation == "getWebsiteGitDeploys":
@@ -699,7 +820,13 @@ class Phase2Catalog:
         if operation == "getWebsiteLsphpSettings":
             return {"version": "8.3", "memoryLimit": "256M", "maxExecutionTime": 60}
         if operation == "getWebsitePhpErrorLog":
-            return {"items": []}
+            entries = website.get("phpErrorLog") or []
+            lines = [
+                f"[{entry.get('timestamp', '')}] {str(entry.get('level', 'info')).upper()}: {entry.get('message', '')}"
+                for entry in entries
+                if isinstance(entry, dict)
+            ]
+            return {"items": entries, "log": "\n".join(lines)}
 
         return {"success": True, "data": []}
 

@@ -80,6 +80,9 @@ class TestWhmcsActions:
         assert isinstance(invoices, list)
         assert {inv["status"] for inv in invoices} == {"Paid", "Unpaid", "Overdue", "Cancelled"}
         assert all(inv["userid"] == 12345 for inv in invoices)
+        assert all("credit" in inv for inv in invoices)
+        inv_81002 = next(inv for inv in invoices if inv["id"] == 81002)
+        assert inv_81002["credit"] == "100.00"
 
     def test_get_invoices_priya_works_without_enhance_hosting(self, client):
         resp = whmcs_post(client, action="GetInvoices", userid="12347")
@@ -137,6 +140,8 @@ class TestWhmcsActions:
         assert "password" in products[0]
         assert "dedicatedip" in products[0]
         assert "customfields" in products[0]
+        for key in ("firstpaymentamount", "nextinvoicedate", "paymentmethodname", "currency"):
+            assert key in products[0]
 
         filtered = whmcs_post(client, action="GetClientsProducts", clientid="12345", serviceid="1005")
         assert filtered.status_code == 200
