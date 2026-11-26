@@ -5,6 +5,27 @@ from pathlib import Path
 from typing import Any
 
 
+class CatalogError(Exception):
+    """Base error raised by Phase2Catalog for HTTP mapping in the router."""
+
+
+class CatalogBadRequest(CatalogError):
+    """Raised for invalid query parameters or mismatched resource types (400)."""
+
+
+class CatalogForbidden(CatalogError):
+    """Raised when the authenticated user lacks required org/member role (403)."""
+
+
+class CatalogNotFound(CatalogError):
+    """Raised when a nested resource is missing or out of scope (404)."""
+
+
+ADMIN_ROLES = {"Owner", "SuperAdmin", "Admin"}
+VALID_MEMBER_ROLES = {"Owner", "SuperAdmin", "Business", "SiteAccess", "Support", "Sysadmin"}
+VALID_RESOLVE_DEPTHS = {"short", "detailed", "queryAllTldNs"}
+
+
 class Phase2Catalog:
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or Path(__file__).resolve().parents[2] / "data" / "customers.json"
@@ -21,6 +42,7 @@ class Phase2Catalog:
         # Fallback to general customer repository so any registered customer has an account identity
         try:
             from app.customer_repository import repository
+
             cust = repository.get_customer(client_id)
             if cust is not None:
                 return {
@@ -43,6 +65,93 @@ class Phase2Catalog:
 
         return None
 
+    def _org_record(self, org_id: str, fallback_org: dict[str, Any] | None = None) -> dict[str, Any] | None:
+        """Return the canonical org object (one that carries members/clones/cloudflareDomains)."""
+        for entry in self._customers():
+            org = entry.get("organization")
+            if org and org.get("id") == org_id and ("members" in org or "websiteClones" in org):
+                return org
+        return fallback_org
+
+    def _org_websites(self, org_id: str) -> set[str]:
+        """Collect all website IDs belonging to an organization across fixture entries."""
+        site_ids: set[str] = set()
+        for entry in self._customers():
+            org = entry.get("organization")
+            site = entry.get("website")
+            if org and org.get("id") == org_id and site and site.get("id"):
+                site_ids.add(site["id"])
+        return site_ids
+
+    def _org_members(self, org_id: str, customer: dict[str, Any]) -> list[dict[str, Any]]:
+        """Return members of the organization, synthesizing the owner if not explicitly listed."""
+        org = self._org_record(org_id, customer.get("organization"))
+        if org and org.get("members"):
+            return list(org["members"])
+        login = customer.get("login") or {}
+        website = customer.get("website")
+        return [
+            {
+                "id": login.get("id", f"login-{customer.get('clientId', '0')}-001"),
+                "name": login.get("name", customer.get("name", "")),
+                "roles": ["Owner"],
+                "isActive": True,
+                "joinedAt": (org or {}).get("createdAt", "2025-01-01")[:10],
+                "email": login.get("email", customer.get("email", "")),
+                "siteAccess": [website["id"]] if website else [],
+                "internalNotes": "Synthesized org owner",
+            }
+        ]
+
+    def _caller_roles_in_org(self, customer: dict[str, Any], org: dict[str, Any]) -> list[str]:
+        if customer.get("memberRoles"):
+            return list(customer["memberRoles"])
+        login_id = (customer.get("login") or {}).get("id")
+        for member in self._org_members(org["id"], customer):
+            if member.get("id") == login_id:
+                return list(member.get("roles", []))
+        return ["Owner"]
+
+    def _allowed_domain_ids(self, customer: dict[str, Any]) -> set[str]:
+        allowed: set[str] = set()
+        website = customer.get("website")
+        if website:
+            allowed.add(website.get("domainId"))
+            allowed.update(website.get("additionalDomainIds", []))
+        for domain in customer.get("domains", []):
+            if "domainId" in domain:
+                allowed.add(str(domain["domainId"]))
+                allowed.add(f"domain-{domain['domainId']}")
+        allowed.discard(None)
+        return allowed
+
+    def _resolve_domain_name(self, customer: dict[str, Any], domain_id: str) -> str:
+        website = customer.get("website")
+        if website:
+            if domain_id == website.get("domainId"):
+                return website.get("domain", "example.com")
+            if domain_id in website.get("additionalDomainIds", []):
+                return f"extra.{website.get('domain', 'example.com')}"
+        for domain in customer.get("domains", []):
+            if domain_id in (str(domain.get("domainId")), f"domain-{domain.get('domainId')}"):
+                return domain.get("domainName", "example.com")
+        return (website or {}).get("domain", "example.com")
+
+    def _find_mailbox(self, website: dict[str, Any], email_address: str) -> dict[str, Any] | None:
+        target = email_address.strip().lower()
+        for mailbox in website.get("emails", []):
+            if mailbox.get("address", "").strip().lower() == target:
+                return mailbox
+        return None
+
+    def _find_app(self, website: dict[str, Any], app_id: str) -> dict[str, Any] | None:
+        for app in website.get("apps", []):
+            if app.get("id") == app_id:
+                return app
+        if app_id == website.get("appId"):
+            return {"id": app_id, "name": "WordPress", "kind": "wordpress", "status": "active"}
+        return None
+
     def authorize(self, client_id: int, path: dict[str, str]) -> dict[str, Any] | None:
         """Return a record only when all supplied resource IDs belong to caller."""
         customer = self.customer(client_id)
@@ -63,19 +172,26 @@ class Phase2Catalog:
             if not subscription or str(path["subscription_id"]) != str(subscription.get("id")):
                 return None
         if "app_id" in path:
-            if not website or path["app_id"] != website.get("appId"):
+            if not website or self._find_app(website, path["app_id"]) is None:
                 return None
         if "domain_id" in path:
-            allowed = set()
-            if website:
-                allowed.add(website.get("domainId"))
-                allowed.update(website.get("additionalDomainIds", []))
-            for d in customer.get("domains", []):
-                if "domainId" in d:
-                    allowed.add(str(d["domainId"]))
-                    allowed.add(f"domain-{d['domainId']}")
-            allowed.discard(None)
+            allowed = self._allowed_domain_ids(customer)
             if not allowed or path["domain_id"] not in allowed:
+                return None
+        if "email_address" in path:
+            if not website or self._find_mailbox(website, path["email_address"]) is None:
+                return None
+        if "deployment_id" in path:
+            if not website:
+                return None
+            deploys = website.get("gitDeployments", [])
+            if not any(d.get("id") == path["deployment_id"] for d in deploys):
+                return None
+        if "clone_id" in path:
+            if not org:
+                return None
+            clones = org.get("websiteClones", [])
+            if not any(c.get("id") == path["clone_id"] for c in clones):
                 return None
 
         return customer
@@ -86,7 +202,8 @@ class Phase2Catalog:
         customer: dict[str, Any],
         query: dict[str, str],
         path: dict[str, str] | None = None,
-    ) -> dict[str, Any]:
+    ) -> Any:
+        path = path or {}
         login = customer.get("login") or {
             "id": f"login-{customer.get('clientId', 'unknown')}-001",
             "email": customer.get("email", ""),
@@ -106,6 +223,8 @@ class Phase2Catalog:
 
         if operation == "getLoginMemberships":
             if org:
+                roles = self._caller_roles_in_org(customer, org)
+                site_count = 1 if website else len(customer.get("memberSiteAccess", []))
                 return {
                     "memberships": [
                         {
@@ -113,12 +232,11 @@ class Phase2Catalog:
                             "orgId": org["id"],
                             "orgName": org["name"],
                             "isMasterOrg": True,
-                            "roles": ["Owner"],
-                            "siteAccessCount": 1 if website else 0,
+                            "roles": roles,
+                            "siteAccessCount": site_count,
                         }
                     ]
                 }
-            # User without active hosting organization has 0 memberships
             return {"memberships": []}
 
         if operation == "getOrg":
@@ -138,43 +256,48 @@ class Phase2Catalog:
                 ],
             }
 
+        if operation == "getMembers":
+            return self._members_response(customer, org, query)
+
+        if operation == "getMember":
+            return self._member_response(customer, org, login, path["member_id"])
+
+        if operation == "getWebsiteClones":
+            clones = (org or {}).get("websiteClones", [])
+            items = [{k: v for k, v in clone.items() if k != "log"} for clone in clones]
+            return {"total": len(items), "items": items}
+
+        if operation == "getWebsiteClone":
+            clones = (org or {}).get("websiteClones", [])
+            clone = next((c for c in clones if c.get("id") == path.get("clone_id")), None)
+            if clone is None:
+                raise CatalogNotFound("Clone job not found")
+            return {k: v for k, v in clone.items() if k != "log"}
+
+        if operation == "getWebsiteCloneLog":
+            clones = (org or {}).get("websiteClones", [])
+            clone = next((c for c in clones if c.get("id") == path.get("clone_id")), None)
+            if clone is None:
+                raise CatalogNotFound("Clone job not found")
+            return clone.get("log", [])
+
+        if operation == "getCloudflareNameServers":
+            cf_map = (org or {}).get("cloudflareDomains", {})
+            entry = cf_map.get(path.get("domain_id", ""))
+            if not entry or not entry.get("configured", False):
+                raise CatalogBadRequest("Cloudflare integration is not configured for this domain")
+            return {
+                "nameServers": entry["nameServers"],
+                "status": entry["status"],
+                "cloudflareZoneId": entry.get("cloudflareZoneId"),
+                "cloudflareTokenId": entry.get("cloudflareTokenId"),
+                "internalNote": entry.get("internalNote"),
+            }
+
         if operation == "getDomains":
             if not org:
                 return {"total": 0, "items": []}
-            items = []
-            if website:
-                items.append({
-                    "id": website.get("domainId", f"domain-{org['id']}-001"),
-                    "orgId": org["id"],
-                    "domain": website.get("domain", "example.com"),
-                    "dkim": True,
-                    "spf": True,
-                    "cloudflareStatus": "Connected",
-                    "cloudflareTokenFriendlyName": "MilesWeb Cloudflare",
-                })
-                for idx, add_id in enumerate(website.get("additionalDomainIds", []), 2):
-                    items.append({
-                        "id": add_id,
-                        "orgId": org["id"],
-                        "domain": f"extra{idx}.{website.get('domain', 'example.com')}",
-                        "dkim": True,
-                        "spf": True,
-                        "cloudflareStatus": "Connected",
-                        "cloudflareTokenFriendlyName": "MilesWeb Cloudflare",
-                    })
-            for d in customer.get("domains", []):
-                d_id = f"domain-{d['domainId']}"
-                if not any(item["id"] in (str(d["domainId"]), d_id) for item in items):
-                    items.append({
-                        "id": d_id,
-                        "orgId": org["id"],
-                        "domain": d.get("domainName", "domain.example"),
-                        "dkim": True,
-                        "spf": True,
-                        "cloudflareStatus": "Connected" if d.get("status") == "Active" else "Disconnected",
-                        "cloudflareTokenFriendlyName": "MilesWeb Cloudflare",
-                    })
-            return {"total": len(items), "items": items}
+            return self._domains_response(customer, org, website)
 
         if operation == "getDomainAuthNs":
             return {
@@ -234,6 +357,136 @@ class Phase2Catalog:
         if not website:
             return {"total": 0, "items": []}
 
+        return self._website_response(operation, customer, org, subscription, website, query, path)
+
+    def _members_response(
+        self,
+        customer: dict[str, Any],
+        org: dict[str, Any] | None,
+        query: dict[str, str],
+    ) -> dict[str, Any]:
+        if not org:
+            raise CatalogNotFound("Organization not found")
+        caller_roles = self._caller_roles_in_org(customer, org)
+        if not any(role in ADMIN_ROLES for role in caller_roles):
+            raise CatalogForbidden("Owner or Admin role is required to list organization members")
+
+        members = self._org_members(org["id"], customer)
+
+        role_filter = query.get("role")
+        if role_filter is not None:
+            if role_filter not in VALID_MEMBER_ROLES:
+                raise CatalogBadRequest(f"Invalid role filter: {role_filter}")
+            members = [m for m in members if role_filter in m.get("roles", [])]
+
+        site_access = query.get("siteAccess")
+        if site_access is not None:
+            org_sites = self._org_websites(org["id"])
+            if site_access not in org_sites:
+                raise CatalogNotFound("Website in siteAccess is not in caller's scope")
+            members = [
+                m
+                for m in members
+                if any(r in {"Owner", "SuperAdmin"} for r in m.get("roles", []))
+                or site_access in m.get("siteAccess", [])
+            ]
+
+        sort_by = query.get("sortBy")
+        sort_order = query.get("sortOrder", "asc")
+        if sort_order not in {"asc", "desc"}:
+            raise CatalogBadRequest(f"Invalid sortOrder: {sort_order}")
+        reverse = sort_order == "desc"
+
+        if sort_by is not None:
+            if sort_by not in {"status", "joinedAt"}:
+                raise CatalogBadRequest(f"Invalid sortBy: {sort_by}")
+            if sort_by == "status":
+                members.sort(key=lambda m: bool(m.get("isActive", False)), reverse=reverse)
+            else:
+                members.sort(key=lambda m: str(m.get("joinedAt", "")), reverse=reverse)
+
+        try:
+            offset = int(query.get("offset", "0"))
+            limit = int(query.get("limit", "25"))
+        except ValueError as exc:
+            raise CatalogBadRequest("offset and limit must be integers") from exc
+        if offset < 0 or limit < 1:
+            raise CatalogBadRequest("offset must be >= 0 and limit must be >= 1")
+
+        total = len(members)
+        return {"total": total, "items": members[offset : offset + limit]}
+
+    def _member_response(
+        self,
+        customer: dict[str, Any],
+        org: dict[str, Any] | None,
+        login: dict[str, Any],
+        member_id: str,
+    ) -> dict[str, Any]:
+        if not org:
+            raise CatalogNotFound("Organization not found")
+        caller_roles = self._caller_roles_in_org(customer, org)
+        is_admin = any(role in ADMIN_ROLES for role in caller_roles)
+        is_self = member_id == login.get("id")
+        if not (is_admin or is_self):
+            raise CatalogForbidden("Owner, Admin, or self access is required to view member details")
+
+        for member in self._org_members(org["id"], customer):
+            if member.get("id") == member_id:
+                return member
+        raise CatalogNotFound("Organization member not found")
+
+    def _domains_response(
+        self,
+        customer: dict[str, Any],
+        org: dict[str, Any],
+        website: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        items = []
+        if website:
+            items.append({
+                "id": website.get("domainId", f"domain-{org['id']}-001"),
+                "orgId": org["id"],
+                "domain": website.get("domain", "example.com"),
+                "dkim": True,
+                "spf": True,
+                "cloudflareStatus": "Connected",
+                "cloudflareTokenFriendlyName": "MilesWeb Cloudflare",
+            })
+            for idx, add_id in enumerate(website.get("additionalDomainIds", []), 2):
+                items.append({
+                    "id": add_id,
+                    "orgId": org["id"],
+                    "domain": f"extra{idx}.{website.get('domain', 'example.com')}",
+                    "dkim": True,
+                    "spf": True,
+                    "cloudflareStatus": "Connected",
+                    "cloudflareTokenFriendlyName": "MilesWeb Cloudflare",
+                })
+        for domain in customer.get("domains", []):
+            d_id = f"domain-{domain['domainId']}"
+            if not any(item["id"] in (str(domain["domainId"]), d_id) for item in items):
+                items.append({
+                    "id": d_id,
+                    "orgId": org["id"],
+                    "domain": domain.get("domainName", "domain.example"),
+                    "dkim": True,
+                    "spf": True,
+                    "cloudflareStatus": "Connected" if domain.get("status") == "Active" else "Disconnected",
+                    "cloudflareTokenFriendlyName": "MilesWeb Cloudflare",
+                })
+        return {"total": len(items), "items": items}
+
+    def _website_response(
+        self,
+        operation: str,
+        customer: dict[str, Any],
+        org: dict[str, Any] | None,
+        subscription: dict[str, Any] | None,
+        website: dict[str, Any],
+        query: dict[str, str],
+        path: dict[str, str],
+    ) -> Any:
         website_item = {
             "id": website["id"],
             "orgId": org["id"] if org else "",
@@ -249,10 +502,12 @@ class Phase2Catalog:
             "mappingKind": "primary",
         }
 
-        if operation == "getWebsite": return website_item
-        if operation == "getWebsiteDomainMappings": return {"total": 1, "items": [domain]}
+        if operation == "getWebsite":
+            return website_item
+        if operation == "getWebsiteDomainMappings":
+            return {"total": 1, "items": [domain]}
         if operation == "getWebsiteDomainMapping":
-            target_domain_id = (path or {}).get("domain_id", website["domainId"])
+            target_domain_id = path.get("domain_id", website["domainId"])
             target_domain = website["domain"]
             mapping_kind = "primary"
             if target_domain_id != website.get("domainId"):
@@ -276,17 +531,72 @@ class Phase2Catalog:
                 "cloudflareFriendlyName": "MilesWeb Cloudflare",
                 "cloudflareTokenId": "cf-token-001",
             }
-        if operation == "getWebsiteDomainMappingDnsStatus": return {"status": "Connected", "lastCheckedAt": "2026-11-23T07:30:00Z"}
-        if operation == "getWebsiteDomainDnsZone": return {"domain": website["domain"], "records": [{"id": "dns-001", "kind": "A", "name": "@", "value": "198.51.100.42", "ttl": 3600}]}
-        if operation == "getWebsiteDomainSslCert": return {"cn": website["domain"], "expires": "2027-11-23T00:00:00Z", "issued": "2026-11-23T00:00:00Z", "issuer": "Mock Let's Encrypt", "sans": [website["domain"]], "forceHttps": True}
-        if operation == "getDomainLocalRemote": return {"localRemote": "local"}
-        if operation == "getWebsiteApps": return {"total": 1, "items": [{"id": website["appId"], "name": "WordPress", "kind": "wordpress", "status": "active"}]}
-        if operation == "getWordpressInfo": return {"id": website["appId"], "name": "WordPress", "url": f"https://{website['domain']}", "version": "6.7.1"}
-        if operation == "getWordpressAppVersion": return {"version": "6.7.1"}
-        if operation == "getWordpressPlugins": return {"total": 1, "items": [{"name": "akismet", "status": "active", "version": "5.3", "updateAvailable": "none"}]}
-        if operation == "getWordpressThemes": return {"total": 1, "items": [{"name": "twentytwentyfour", "status": "active", "version": "1.3", "autoUpdate": "on"}]}
-        if operation == "getWebsiteBackups": return {"total": 1, "items": [{"id": 9001, "createdAt": "2026-11-20T01:00:00Z", "size": 10485760, "status": "completed"}]}
-        if operation == "getWebsiteBackup": return {"id": 9001, "createdAt": "2026-11-20T01:00:00Z", "size": 10485760, "status": "completed"}
+        if operation == "getWebsiteDomainMappingDnsStatus":
+            return {"status": "Connected", "lastCheckedAt": "2026-11-23T07:30:00Z"}
+        if operation == "getWebsiteDomainDnsZone":
+            return {
+                "domain": website["domain"],
+                "records": [{"id": "dns-001", "kind": "A", "name": "@", "value": "198.51.100.42", "ttl": 3600}],
+            }
+        if operation == "getWebsiteDomainDnsQuery":
+            return self._dns_query_response(customer, website, path["domain_id"], query)
+        if operation == "getWebsiteDomainSslCert":
+            return {
+                "cn": website["domain"],
+                "expires": "2027-11-23T00:00:00Z",
+                "issued": "2026-11-23T00:00:00Z",
+                "issuer": "Mock Let's Encrypt",
+                "sans": [website["domain"]],
+                "forceHttps": True,
+            }
+        if operation == "getDomainLocalRemote":
+            return {"localRemote": "local"}
+        if operation == "getWebsiteServerDomains":
+            return website.get("serverDomains") or {
+                "appServerDomains": [f"app01.{website['server']}.milesweb.example"],
+                "emailServerDomains": [f"mail01.{website['server']}.milesweb.example"],
+                "dbServerDomains": [f"db01.{website['server']}.milesweb.example"],
+                "internalIps": ["10.20.30.99"],
+                "controlPanelToken": "internal-cp-token-default",
+            }
+        if operation == "getScreenshotTimestamp":
+            domain_id = path["domain_id"]
+            shots = website.get("screenshotTimestamps", {})
+            return shots.get(domain_id) or {
+                "seconds": 1764000000,
+                "internalStorageKey": f"screenshots/{website['id']}/{domain_id}.png",
+                "workerNode": "shot-worker-01",
+            }
+        if operation == "getWebsiteApps":
+            apps = website.get("apps") or [
+                {"id": website["appId"], "name": "WordPress", "kind": "wordpress", "status": "active"}
+            ]
+            return {
+                "total": len(apps),
+                "items": [{"id": a["id"], "name": a["name"], "kind": a["kind"], "status": a["status"]} for a in apps],
+            }
+        if operation in {"getWordpressInfo", "getWordpressAppVersion", "getWordpressPlugins", "getWordpressThemes"}:
+            app_id = path.get("app_id")
+            if app_id:
+                app = self._find_app(website, app_id)
+                if app and app.get("kind") != "wordpress":
+                    raise CatalogBadRequest("App is not a WordPress installation")
+            if operation == "getWordpressInfo":
+                return {"id": website["appId"], "name": "WordPress", "url": f"https://{website['domain']}", "version": "6.7.1"}
+            if operation == "getWordpressAppVersion":
+                return {"version": "6.7.1"}
+            if operation == "getWordpressPlugins":
+                return {"total": 1, "items": [{"name": "akismet", "status": "active", "version": "5.3", "updateAvailable": "none"}]}
+            return {"total": 1, "items": [{"name": "twentytwentyfour", "status": "active", "version": "1.3", "autoUpdate": "on"}]}
+        if operation == "getJoomlaInfo":
+            app = self._find_app(website, path.get("app_id", ""))
+            if not app or app.get("kind") != "joomla":
+                raise CatalogBadRequest("App is not a Joomla installation")
+            return app.get("joomlaInfo", {})
+        if operation == "getWebsiteBackups":
+            return {"total": 1, "items": [{"id": 9001, "createdAt": "2026-11-20T01:00:00Z", "size": 10485760, "status": "completed"}]}
+        if operation == "getWebsiteBackup":
+            return {"id": 9001, "createdAt": "2026-11-20T01:00:00Z", "size": 10485760, "status": "completed"}
         if operation == "getWebsiteBackupStatus":
             return {
                 "id": 9001,
@@ -298,7 +608,7 @@ class Phase2Catalog:
                 "emailsStatus": "successful",
             }
         if operation == "getWebsiteRestoreStatus":
-            b_id = int((path or {}).get("backup_id", 9001))
+            b_id = int(path.get("backup_id", 9001))
             return {
                 "backupId": b_id,
                 "startedAt": "2026-11-20T01:00:00Z",
@@ -307,24 +617,145 @@ class Phase2Catalog:
                 "mysqlDbsStatus": "successful",
                 "emailsStatus": "successful",
             }
-        if operation == "getWebsiteEmails": return {"total": 1, "items": [{"email": f"hello@{website['domain']}", "status": "active", "quota": {"usage": 5242880, "total": 1073741824}}]}
-        if operation == "getFtpUsers": return {"items": [{"account": "siteuser", "homeDir": f"/home/siteuser/{website['domain']}"}]}
-        if operation == "getWebsiteMySQLDBs": return {"total": 1, "items": [{"name": "site_db", "size": 12582912}]}
-        if operation == "getWebsiteMySQLUsers": return {"total": 1, "items": [{"name": "site_user", "host": "localhost"}]}
-        if operation == "getWebsitePostgresqlDbs": return {"total": 1, "items": [{"name": "site_postgres", "size": 0}]}
-        if operation == "getWebsitePostgresqlUsers": return {"total": 1, "items": [{"name": "site_pg_user"}]}
-        if operation == "getWebsiteSshKeys": return {"items": [{"id": "ssh-001", "name": "deployment-key", "fingerprint": "SHA256:mockfingerprint"}]}
-        if operation == "getWebsiteGitInfo": return {"repository": "https://git.example/mock/site.git", "branch": "main", "connected": True}
-        if operation == "getWebsiteGitDeploys": return {"total": 1, "items": [{"id": "deploy-001", "status": "success", "createdAt": "2026-11-22T10:00:00Z"}]}
-        if operation == "getWebsiteMetrics": return {"granularity": query.get("granularity", "day"), "items": [{"timestamp": "2026-11-23T00:00:00Z", "pageViews": 42, "transfer": 1048576}]}
-        if operation == "getWebsiteFsQuotaLimits": return {"usage": 73400320, "total": 1073741824}
-        if operation == "getWebsiteCgroupLimits": return {"cpu": 100, "memory": 536870912, "processes": 50}
-        if operation == "getWebsiteEnabledPhpExtensions": return {"items": ["curl", "mbstring", "mysqli", "openssl"]}
-        if operation == "getWebsiteLsphpSettings": return {"version": "8.3", "memoryLimit": "256M", "maxExecutionTime": 60}
-        if operation == "getWebsitePhpErrorLog": return {"items": []}
-        if operation == "getOrgActivities": return {"total": 1, "items": [{"id": "activity-001", "orgId": org["id"] if org else "", "kind": "added", "createdAt": "2026-11-20T10:00:00Z", "message": "Mock website created"}]}
+        if operation == "getWebsiteEmails":
+            emails = website.get("emails")
+            if emails is not None:
+                return {
+                    "total": len(emails),
+                    "items": [
+                        {"email": m["address"], "status": m["status"], "quota": m["quota"]}
+                        for m in emails
+                    ],
+                }
+            return {"total": 1, "items": [{"email": f"hello@{website['domain']}", "status": "active", "quota": {"usage": 5242880, "total": 1073741824}}]}
+        if operation == "getWebsiteEmail":
+            mailbox = self._find_mailbox(website, path["email_address"])
+            if not mailbox:
+                raise CatalogNotFound("Mailbox not found")
+            return {k: v for k, v in mailbox.items() if k not in {"clientConf", "autoresponder"}}
+        if operation == "getWebsiteEmailClientConf":
+            mailbox = self._find_mailbox(website, path["email_address"])
+            if not mailbox:
+                raise CatalogNotFound("Mailbox not found")
+            return mailbox.get("clientConf", {})
+        if operation == "getWebsiteEmailAutoresponder":
+            mailbox = self._find_mailbox(website, path["email_address"])
+            if not mailbox:
+                raise CatalogNotFound("Mailbox not found")
+            return mailbox.get("autoresponder", {"enabled": False, "startDate": None, "endDate": None})
+        if operation == "getFtpUsers":
+            return {"items": [{"account": "siteuser", "homeDir": f"/home/siteuser/{website['domain']}"}]}
+        if operation == "getWebsiteMySQLDBs":
+            return {"total": 1, "items": [{"name": "site_db", "size": 12582912}]}
+        if operation == "getWebsiteMySQLUsers":
+            return {"total": 1, "items": [{"name": "site_user", "host": "localhost"}]}
+        if operation == "getWebsitePostgresqlDbs":
+            return {"total": 1, "items": [{"name": "site_postgres", "size": 0}]}
+        if operation == "getWebsitePostgresqlUsers":
+            return {"total": 1, "items": [{"name": "site_pg_user"}]}
+        if operation == "getWebsiteSshKeys":
+            return {"items": [{"id": "ssh-001", "name": "deployment-key", "fingerprint": "SHA256:mockfingerprint"}]}
+        if operation == "getWebsiteGitInfo":
+            return {"repository": "https://git.example/mock/site.git", "branch": "main", "connected": True}
+        if operation == "getWebsiteGitDeploys":
+            deploys = website.get("gitDeployments")
+            if deploys is not None:
+                return {
+                    "total": len(deploys),
+                    "items": [{k: v for k, v in d.items() if k != "log"} for d in deploys],
+                }
+            return {"total": 1, "items": [{"id": "deploy-001", "status": "success", "createdAt": "2026-11-22T10:00:00Z"}]}
+        if operation == "getWebsiteGitDeploymentLog":
+            deploy = next((d for d in website.get("gitDeployments", []) if d.get("id") == path.get("deployment_id")), None)
+            if not deploy:
+                raise CatalogNotFound("Git deployment not found")
+            return deploy.get("log", "")
+        if operation == "getWebsiteHtaccessRewrites":
+            return website.get("htaccessRewrites") or {
+                "items": [
+                    {
+                        "lineNumber": 1,
+                        "rule": {"pattern": "^index\\.html$", "substitution": "/", "flags": ["R=301", "L"]},
+                        "conds": [],
+                        "internalRuleId": "rw-default-01",
+                    }
+                ],
+                "internalFileHash": "default-htaccess-hash",
+            }
+        if operation == "getWebsiteHtaccessIpsRule":
+            return website.get("htaccessIps") or {
+                "kind": "allow",
+                "ips": [],
+                "internalRuleId": "ip-default-01",
+            }
+        if operation == "getWebsiteMetrics":
+            return {"granularity": query.get("granularity", "day"), "items": [{"timestamp": "2026-11-23T00:00:00Z", "pageViews": 42, "transfer": 1048576}]}
+        if operation == "getWebsiteFsQuotaLimits":
+            return {"usage": 73400320, "total": 1073741824}
+        if operation == "getWebsiteCgroupLimits":
+            return {"cpu": 100, "memory": 536870912, "processes": 50}
+        if operation == "getWebsiteEnabledPhpExtensions":
+            return {"items": ["curl", "mbstring", "mysqli", "openssl"]}
+        if operation == "getWebsiteLsphpSettings":
+            return {"version": "8.3", "memoryLimit": "256M", "maxExecutionTime": 60}
+        if operation == "getWebsitePhpErrorLog":
+            return {"items": []}
 
         return {"success": True, "data": []}
+
+    def _dns_query_response(
+        self,
+        customer: dict[str, Any],
+        website: dict[str, Any],
+        domain_id: str,
+        query: dict[str, str],
+    ) -> dict[str, Any]:
+        depth = query.get("resolveDepth", "short")
+        if depth not in VALID_RESOLVE_DEPTHS:
+            raise CatalogBadRequest(f"Invalid resolveDepth: {depth}")
+
+        fqdn = self._resolve_domain_name(customer, domain_id)
+        tld = fqdn.rsplit(".", 1)[-1] if "." in fqdn else "example"
+        root: dict[str, Any] = {
+            "name": ".",
+            "servers": [{"name": "a.root-servers.net", "ip": "198.41.0.4"}],
+            "result": "NOERROR",
+            "rawPacket": "mock-base64-dns-wire-packet",
+        }
+        if depth in {"detailed", "queryAllTldNs"}:
+            root["children"] = [
+                {
+                    "name": f"{tld}.",
+                    "servers": [
+                        {"name": "ns1.milesweb.com", "ip": "198.51.100.1"},
+                        {"name": "ns2.milesweb.com", "ip": "198.51.100.2"},
+                    ],
+                    "result": "NOERROR",
+                }
+            ]
+
+        tld_ns_map: dict[str, Any] = {
+            "ns1.milesweb.com": {
+                "ips": ["198.51.100.1"],
+                "status": "resolved",
+                "records": [{"type": "A", "value": "198.51.100.42", "ttl": 3600}],
+            }
+        }
+        if depth == "queryAllTldNs":
+            tld_ns_map["ns2.milesweb.com"] = {
+                "ips": ["198.51.100.2"],
+                "status": "resolved",
+                "records": [{"type": "A", "value": "198.51.100.42", "ttl": 3600}],
+            }
+
+        return {
+            "fqdn": fqdn,
+            "resolveDepth": depth,
+            "root": root,
+            "tldNsMap": tld_ns_map,
+            "internalResolverNode": f"resolver.{website['server']}.internal",
+            "debugTrace": "internal-dns-trace-id-001",
+        }
 
 
 catalog = Phase2Catalog()

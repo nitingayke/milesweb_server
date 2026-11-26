@@ -42,7 +42,1616 @@
         "ownerEmail": "rahul@example.com",
         "subscriptionsCount": 1,
         "websitesCount": 1,
-        "createdAt": "2025-03-12T09:00:00Z"
+        "createdAt": "2025-03-12T09:00:00Z",
+        "members": [
+          {
+            "id": "login-rahul-001",
+            "name": "Rahul Sharma",
+            "roles": [
+              "Owner"
+            ],
+            "isActive": true,
+            "joinedAt": "2025-03-12",
+            "email": "rahul@example.com",
+            "siteAccess": [
+              "site-rahul-001"
+            ],
+            "internalNotes": "Primary account owner",
+            "inviteToken": null
+          },
+          {
+            "id": "login-vikram-001",
+            "name": "Vikram Mehta",
+            "roles": [
+              "SiteAccess"
+            ],
+            "isActive": true,
+            "joinedAt": "2026-01-15",
+            "email": "vikram@example.com",
+            "siteAccess": [
+              "site-rahul-001"
+            ],
+            "internalNotes": "Developer contractor - restricted to site access",
+            "inviteToken": "internal-invite-tok-002"
+          }
+        ],
+        "websiteClones": [
+          {
+            "id": "clone-rahul-001",
+            "sourceWebsiteId": "site-rahul-001",
+            "destWebsiteId": "site-rahul-staging-001",
+            "status": "complete",
+            "internalWorkerId": "worker-clone-01",
+            "rsyncToken": "internal-rsync-token-001",
+            "notes": "Full staging clone with 215 log lines",
+            "log": [
+              {
+                "createdAt": "2026-11-25T03:00:02Z",
+                "message": "Cloning step 1/215: syncing files and database tables",
+                "percentageComplete": 0.5,
+                "internalStepId": "step-001",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:04Z",
+                "message": "Cloning step 2/215: syncing files and database tables",
+                "percentageComplete": 0.9,
+                "internalStepId": "step-002",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:06Z",
+                "message": "Cloning step 3/215: syncing files and database tables",
+                "percentageComplete": 1.4,
+                "internalStepId": "step-003",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:08Z",
+                "message": "Cloning step 4/215: syncing files and database tables",
+                "percentageComplete": 1.9,
+                "internalStepId": "step-004",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:10Z",
+                "message": "Cloning step 5/215: syncing files and database tables",
+                "percentageComplete": 2.3,
+                "internalStepId": "step-005",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:12Z",
+                "message": "Cloning step 6/215: syncing files and database tables",
+                "percentageComplete": 2.8,
+                "internalStepId": "step-006",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:14Z",
+                "message": "Cloning step 7/215: syncing files and database tables",
+                "percentageComplete": 3.3,
+                "internalStepId": "step-007",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:16Z",
+                "message": "Cloning step 8/215: syncing files and database tables",
+                "percentageComplete": 3.7,
+                "internalStepId": "step-008",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:18Z",
+                "message": "Cloning step 9/215: syncing files and database tables",
+                "percentageComplete": 4.2,
+                "internalStepId": "step-009",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:20Z",
+                "message": "Cloning step 10/215: syncing files and database tables",
+                "percentageComplete": 4.7,
+                "internalStepId": "step-010",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:22Z",
+                "message": "Cloning step 11/215: syncing files and database tables",
+                "percentageComplete": 5.1,
+                "internalStepId": "step-011",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:24Z",
+                "message": "Cloning step 12/215: syncing files and database tables",
+                "percentageComplete": 5.6,
+                "internalStepId": "step-012",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:26Z",
+                "message": "Cloning step 13/215: syncing files and database tables",
+                "percentageComplete": 6.0,
+                "internalStepId": "step-013",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:28Z",
+                "message": "Cloning step 14/215: syncing files and database tables",
+                "percentageComplete": 6.5,
+                "internalStepId": "step-014",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:30Z",
+                "message": "Cloning step 15/215: syncing files and database tables",
+                "percentageComplete": 7.0,
+                "internalStepId": "step-015",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:32Z",
+                "message": "Cloning step 16/215: syncing files and database tables",
+                "percentageComplete": 7.4,
+                "internalStepId": "step-016",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:34Z",
+                "message": "Cloning step 17/215: syncing files and database tables",
+                "percentageComplete": 7.9,
+                "internalStepId": "step-017",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:36Z",
+                "message": "Cloning step 18/215: syncing files and database tables",
+                "percentageComplete": 8.4,
+                "internalStepId": "step-018",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:38Z",
+                "message": "Cloning step 19/215: syncing files and database tables",
+                "percentageComplete": 8.8,
+                "internalStepId": "step-019",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:40Z",
+                "message": "Cloning step 20/215: syncing files and database tables",
+                "percentageComplete": 9.3,
+                "internalStepId": "step-020",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:42Z",
+                "message": "Cloning step 21/215: syncing files and database tables",
+                "percentageComplete": 9.8,
+                "internalStepId": "step-021",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:44Z",
+                "message": "Cloning step 22/215: syncing files and database tables",
+                "percentageComplete": 10.2,
+                "internalStepId": "step-022",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:46Z",
+                "message": "Cloning step 23/215: syncing files and database tables",
+                "percentageComplete": 10.7,
+                "internalStepId": "step-023",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:48Z",
+                "message": "Cloning step 24/215: syncing files and database tables",
+                "percentageComplete": 11.2,
+                "internalStepId": "step-024",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:50Z",
+                "message": "Cloning step 25/215: syncing files and database tables",
+                "percentageComplete": 11.6,
+                "internalStepId": "step-025",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:52Z",
+                "message": "Cloning step 26/215: syncing files and database tables",
+                "percentageComplete": 12.1,
+                "internalStepId": "step-026",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:54Z",
+                "message": "Cloning step 27/215: syncing files and database tables",
+                "percentageComplete": 12.6,
+                "internalStepId": "step-027",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:56Z",
+                "message": "Cloning step 28/215: syncing files and database tables",
+                "percentageComplete": 13.0,
+                "internalStepId": "step-028",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:00:58Z",
+                "message": "Cloning step 29/215: syncing files and database tables",
+                "percentageComplete": 13.5,
+                "internalStepId": "step-029",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:00Z",
+                "message": "Cloning step 30/215: syncing files and database tables",
+                "percentageComplete": 14.0,
+                "internalStepId": "step-030",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:02Z",
+                "message": "Cloning step 31/215: syncing files and database tables",
+                "percentageComplete": 14.4,
+                "internalStepId": "step-031",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:04Z",
+                "message": "Cloning step 32/215: syncing files and database tables",
+                "percentageComplete": 14.9,
+                "internalStepId": "step-032",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:06Z",
+                "message": "Cloning step 33/215: syncing files and database tables",
+                "percentageComplete": 15.3,
+                "internalStepId": "step-033",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:08Z",
+                "message": "Cloning step 34/215: syncing files and database tables",
+                "percentageComplete": 15.8,
+                "internalStepId": "step-034",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:10Z",
+                "message": "Cloning step 35/215: syncing files and database tables",
+                "percentageComplete": 16.3,
+                "internalStepId": "step-035",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:12Z",
+                "message": "Cloning step 36/215: syncing files and database tables",
+                "percentageComplete": 16.7,
+                "internalStepId": "step-036",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:14Z",
+                "message": "Cloning step 37/215: syncing files and database tables",
+                "percentageComplete": 17.2,
+                "internalStepId": "step-037",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:16Z",
+                "message": "Cloning step 38/215: syncing files and database tables",
+                "percentageComplete": 17.7,
+                "internalStepId": "step-038",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:18Z",
+                "message": "Cloning step 39/215: syncing files and database tables",
+                "percentageComplete": 18.1,
+                "internalStepId": "step-039",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:20Z",
+                "message": "Cloning step 40/215: syncing files and database tables",
+                "percentageComplete": 18.6,
+                "internalStepId": "step-040",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:22Z",
+                "message": "Cloning step 41/215: syncing files and database tables",
+                "percentageComplete": 19.1,
+                "internalStepId": "step-041",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:24Z",
+                "message": "Cloning step 42/215: syncing files and database tables",
+                "percentageComplete": 19.5,
+                "internalStepId": "step-042",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:26Z",
+                "message": "Cloning step 43/215: syncing files and database tables",
+                "percentageComplete": 20.0,
+                "internalStepId": "step-043",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:28Z",
+                "message": "Cloning step 44/215: syncing files and database tables",
+                "percentageComplete": 20.5,
+                "internalStepId": "step-044",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:30Z",
+                "message": "Cloning step 45/215: syncing files and database tables",
+                "percentageComplete": 20.9,
+                "internalStepId": "step-045",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:32Z",
+                "message": "Cloning step 46/215: syncing files and database tables",
+                "percentageComplete": 21.4,
+                "internalStepId": "step-046",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:34Z",
+                "message": "Cloning step 47/215: syncing files and database tables",
+                "percentageComplete": 21.9,
+                "internalStepId": "step-047",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:36Z",
+                "message": "Cloning step 48/215: syncing files and database tables",
+                "percentageComplete": 22.3,
+                "internalStepId": "step-048",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:38Z",
+                "message": "Cloning step 49/215: syncing files and database tables",
+                "percentageComplete": 22.8,
+                "internalStepId": "step-049",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:40Z",
+                "message": "Cloning step 50/215: syncing files and database tables",
+                "percentageComplete": 23.3,
+                "internalStepId": "step-050",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:42Z",
+                "message": "Cloning step 51/215: syncing files and database tables",
+                "percentageComplete": 23.7,
+                "internalStepId": "step-051",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:44Z",
+                "message": "Cloning step 52/215: syncing files and database tables",
+                "percentageComplete": 24.2,
+                "internalStepId": "step-052",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:46Z",
+                "message": "Cloning step 53/215: syncing files and database tables",
+                "percentageComplete": 24.7,
+                "internalStepId": "step-053",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:48Z",
+                "message": "Cloning step 54/215: syncing files and database tables",
+                "percentageComplete": 25.1,
+                "internalStepId": "step-054",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:50Z",
+                "message": "Cloning step 55/215: syncing files and database tables",
+                "percentageComplete": 25.6,
+                "internalStepId": "step-055",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:52Z",
+                "message": "Cloning step 56/215: syncing files and database tables",
+                "percentageComplete": 26.0,
+                "internalStepId": "step-056",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:54Z",
+                "message": "Cloning step 57/215: syncing files and database tables",
+                "percentageComplete": 26.5,
+                "internalStepId": "step-057",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:56Z",
+                "message": "Cloning step 58/215: syncing files and database tables",
+                "percentageComplete": 27.0,
+                "internalStepId": "step-058",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:01:58Z",
+                "message": "Cloning step 59/215: syncing files and database tables",
+                "percentageComplete": 27.4,
+                "internalStepId": "step-059",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:00Z",
+                "message": "Cloning step 60/215: syncing files and database tables",
+                "percentageComplete": 27.9,
+                "internalStepId": "step-060",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:02Z",
+                "message": "Cloning step 61/215: syncing files and database tables",
+                "percentageComplete": 28.4,
+                "internalStepId": "step-061",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:04Z",
+                "message": "Cloning step 62/215: syncing files and database tables",
+                "percentageComplete": 28.8,
+                "internalStepId": "step-062",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:06Z",
+                "message": "Cloning step 63/215: syncing files and database tables",
+                "percentageComplete": 29.3,
+                "internalStepId": "step-063",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:08Z",
+                "message": "Cloning step 64/215: syncing files and database tables",
+                "percentageComplete": 29.8,
+                "internalStepId": "step-064",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:10Z",
+                "message": "Cloning step 65/215: syncing files and database tables",
+                "percentageComplete": 30.2,
+                "internalStepId": "step-065",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:12Z",
+                "message": "Cloning step 66/215: syncing files and database tables",
+                "percentageComplete": 30.7,
+                "internalStepId": "step-066",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:14Z",
+                "message": "Cloning step 67/215: syncing files and database tables",
+                "percentageComplete": 31.2,
+                "internalStepId": "step-067",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:16Z",
+                "message": "Cloning step 68/215: syncing files and database tables",
+                "percentageComplete": 31.6,
+                "internalStepId": "step-068",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:18Z",
+                "message": "Cloning step 69/215: syncing files and database tables",
+                "percentageComplete": 32.1,
+                "internalStepId": "step-069",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:20Z",
+                "message": "Cloning step 70/215: syncing files and database tables",
+                "percentageComplete": 32.6,
+                "internalStepId": "step-070",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:22Z",
+                "message": "Cloning step 71/215: syncing files and database tables",
+                "percentageComplete": 33.0,
+                "internalStepId": "step-071",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:24Z",
+                "message": "Cloning step 72/215: syncing files and database tables",
+                "percentageComplete": 33.5,
+                "internalStepId": "step-072",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:26Z",
+                "message": "Cloning step 73/215: syncing files and database tables",
+                "percentageComplete": 34.0,
+                "internalStepId": "step-073",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:28Z",
+                "message": "Cloning step 74/215: syncing files and database tables",
+                "percentageComplete": 34.4,
+                "internalStepId": "step-074",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:30Z",
+                "message": "Cloning step 75/215: syncing files and database tables",
+                "percentageComplete": 34.9,
+                "internalStepId": "step-075",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:32Z",
+                "message": "Cloning step 76/215: syncing files and database tables",
+                "percentageComplete": 35.3,
+                "internalStepId": "step-076",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:34Z",
+                "message": "Cloning step 77/215: syncing files and database tables",
+                "percentageComplete": 35.8,
+                "internalStepId": "step-077",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:36Z",
+                "message": "Cloning step 78/215: syncing files and database tables",
+                "percentageComplete": 36.3,
+                "internalStepId": "step-078",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:38Z",
+                "message": "Cloning step 79/215: syncing files and database tables",
+                "percentageComplete": 36.7,
+                "internalStepId": "step-079",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:40Z",
+                "message": "Cloning step 80/215: syncing files and database tables",
+                "percentageComplete": 37.2,
+                "internalStepId": "step-080",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:42Z",
+                "message": "Cloning step 81/215: syncing files and database tables",
+                "percentageComplete": 37.7,
+                "internalStepId": "step-081",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:44Z",
+                "message": "Cloning step 82/215: syncing files and database tables",
+                "percentageComplete": 38.1,
+                "internalStepId": "step-082",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:46Z",
+                "message": "Cloning step 83/215: syncing files and database tables",
+                "percentageComplete": 38.6,
+                "internalStepId": "step-083",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:48Z",
+                "message": "Cloning step 84/215: syncing files and database tables",
+                "percentageComplete": 39.1,
+                "internalStepId": "step-084",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:50Z",
+                "message": "Cloning step 85/215: syncing files and database tables",
+                "percentageComplete": 39.5,
+                "internalStepId": "step-085",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:52Z",
+                "message": "Cloning step 86/215: syncing files and database tables",
+                "percentageComplete": 40.0,
+                "internalStepId": "step-086",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:54Z",
+                "message": "Cloning step 87/215: syncing files and database tables",
+                "percentageComplete": 40.5,
+                "internalStepId": "step-087",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:56Z",
+                "message": "Cloning step 88/215: syncing files and database tables",
+                "percentageComplete": 40.9,
+                "internalStepId": "step-088",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:02:58Z",
+                "message": "Cloning step 89/215: syncing files and database tables",
+                "percentageComplete": 41.4,
+                "internalStepId": "step-089",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:00Z",
+                "message": "Cloning step 90/215: syncing files and database tables",
+                "percentageComplete": 41.9,
+                "internalStepId": "step-090",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:02Z",
+                "message": "Cloning step 91/215: syncing files and database tables",
+                "percentageComplete": 42.3,
+                "internalStepId": "step-091",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:04Z",
+                "message": "Cloning step 92/215: syncing files and database tables",
+                "percentageComplete": 42.8,
+                "internalStepId": "step-092",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:06Z",
+                "message": "Cloning step 93/215: syncing files and database tables",
+                "percentageComplete": 43.3,
+                "internalStepId": "step-093",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:08Z",
+                "message": "Cloning step 94/215: syncing files and database tables",
+                "percentageComplete": 43.7,
+                "internalStepId": "step-094",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:10Z",
+                "message": "Cloning step 95/215: syncing files and database tables",
+                "percentageComplete": 44.2,
+                "internalStepId": "step-095",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:12Z",
+                "message": "Cloning step 96/215: syncing files and database tables",
+                "percentageComplete": 44.7,
+                "internalStepId": "step-096",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:14Z",
+                "message": "Cloning step 97/215: syncing files and database tables",
+                "percentageComplete": 45.1,
+                "internalStepId": "step-097",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:16Z",
+                "message": "Cloning step 98/215: syncing files and database tables",
+                "percentageComplete": 45.6,
+                "internalStepId": "step-098",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:18Z",
+                "message": "Cloning step 99/215: syncing files and database tables",
+                "percentageComplete": 46.0,
+                "internalStepId": "step-099",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:20Z",
+                "message": "Cloning step 100/215: syncing config with https://clonebot:fakeClonePass@staging.example/sync",
+                "percentageComplete": 46.5,
+                "internalStepId": "step-100",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:22Z",
+                "message": "Cloning step 101/215: syncing files and database tables",
+                "percentageComplete": 47.0,
+                "internalStepId": "step-101",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:24Z",
+                "message": "Cloning step 102/215: syncing files and database tables",
+                "percentageComplete": 47.4,
+                "internalStepId": "step-102",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:26Z",
+                "message": "Cloning step 103/215: syncing files and database tables",
+                "percentageComplete": 47.9,
+                "internalStepId": "step-103",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:28Z",
+                "message": "Cloning step 104/215: syncing files and database tables",
+                "percentageComplete": 48.4,
+                "internalStepId": "step-104",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:30Z",
+                "message": "Cloning step 105/215: syncing files and database tables",
+                "percentageComplete": 48.8,
+                "internalStepId": "step-105",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:32Z",
+                "message": "Cloning step 106/215: syncing files and database tables",
+                "percentageComplete": 49.3,
+                "internalStepId": "step-106",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:34Z",
+                "message": "Cloning step 107/215: syncing files and database tables",
+                "percentageComplete": 49.8,
+                "internalStepId": "step-107",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:36Z",
+                "message": "Cloning step 108/215: syncing files and database tables",
+                "percentageComplete": 50.2,
+                "internalStepId": "step-108",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:38Z",
+                "message": "Cloning step 109/215: syncing files and database tables",
+                "percentageComplete": 50.7,
+                "internalStepId": "step-109",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:40Z",
+                "message": "Cloning step 110/215: syncing files and database tables",
+                "percentageComplete": 51.2,
+                "internalStepId": "step-110",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:42Z",
+                "message": "Cloning step 111/215: syncing files and database tables",
+                "percentageComplete": 51.6,
+                "internalStepId": "step-111",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:44Z",
+                "message": "Cloning step 112/215: syncing files and database tables",
+                "percentageComplete": 52.1,
+                "internalStepId": "step-112",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:46Z",
+                "message": "Cloning step 113/215: syncing files and database tables",
+                "percentageComplete": 52.6,
+                "internalStepId": "step-113",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:48Z",
+                "message": "Cloning step 114/215: syncing files and database tables",
+                "percentageComplete": 53.0,
+                "internalStepId": "step-114",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:50Z",
+                "message": "Cloning step 115/215: syncing files and database tables",
+                "percentageComplete": 53.5,
+                "internalStepId": "step-115",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:52Z",
+                "message": "Cloning step 116/215: syncing files and database tables",
+                "percentageComplete": 54.0,
+                "internalStepId": "step-116",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:54Z",
+                "message": "Cloning step 117/215: syncing files and database tables",
+                "percentageComplete": 54.4,
+                "internalStepId": "step-117",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:56Z",
+                "message": "Cloning step 118/215: syncing files and database tables",
+                "percentageComplete": 54.9,
+                "internalStepId": "step-118",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:03:58Z",
+                "message": "Cloning step 119/215: syncing files and database tables",
+                "percentageComplete": 55.3,
+                "internalStepId": "step-119",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:00Z",
+                "message": "Cloning step 120/215: syncing files and database tables",
+                "percentageComplete": 55.8,
+                "internalStepId": "step-120",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:02Z",
+                "message": "Cloning step 121/215: syncing files and database tables",
+                "percentageComplete": 56.3,
+                "internalStepId": "step-121",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:04Z",
+                "message": "Cloning step 122/215: syncing files and database tables",
+                "percentageComplete": 56.7,
+                "internalStepId": "step-122",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:06Z",
+                "message": "Cloning step 123/215: syncing files and database tables",
+                "percentageComplete": 57.2,
+                "internalStepId": "step-123",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:08Z",
+                "message": "Cloning step 124/215: syncing files and database tables",
+                "percentageComplete": 57.7,
+                "internalStepId": "step-124",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:10Z",
+                "message": "Cloning step 125/215: syncing files and database tables",
+                "percentageComplete": 58.1,
+                "internalStepId": "step-125",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:12Z",
+                "message": "Cloning step 126/215: syncing files and database tables",
+                "percentageComplete": 58.6,
+                "internalStepId": "step-126",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:14Z",
+                "message": "Cloning step 127/215: syncing files and database tables",
+                "percentageComplete": 59.1,
+                "internalStepId": "step-127",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:16Z",
+                "message": "Cloning step 128/215: syncing files and database tables",
+                "percentageComplete": 59.5,
+                "internalStepId": "step-128",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:18Z",
+                "message": "Cloning step 129/215: syncing files and database tables",
+                "percentageComplete": 60.0,
+                "internalStepId": "step-129",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:20Z",
+                "message": "Cloning step 130/215: syncing files and database tables",
+                "percentageComplete": 60.5,
+                "internalStepId": "step-130",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:22Z",
+                "message": "Cloning step 131/215: syncing files and database tables",
+                "percentageComplete": 60.9,
+                "internalStepId": "step-131",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:24Z",
+                "message": "Cloning step 132/215: syncing files and database tables",
+                "percentageComplete": 61.4,
+                "internalStepId": "step-132",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:26Z",
+                "message": "Cloning step 133/215: syncing files and database tables",
+                "percentageComplete": 61.9,
+                "internalStepId": "step-133",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:28Z",
+                "message": "Cloning step 134/215: syncing files and database tables",
+                "percentageComplete": 62.3,
+                "internalStepId": "step-134",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:30Z",
+                "message": "Cloning step 135/215: syncing files and database tables",
+                "percentageComplete": 62.8,
+                "internalStepId": "step-135",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:32Z",
+                "message": "Cloning step 136/215: syncing files and database tables",
+                "percentageComplete": 63.3,
+                "internalStepId": "step-136",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:34Z",
+                "message": "Cloning step 137/215: syncing files and database tables",
+                "percentageComplete": 63.7,
+                "internalStepId": "step-137",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:36Z",
+                "message": "Cloning step 138/215: syncing files and database tables",
+                "percentageComplete": 64.2,
+                "internalStepId": "step-138",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:38Z",
+                "message": "Cloning step 139/215: syncing files and database tables",
+                "percentageComplete": 64.7,
+                "internalStepId": "step-139",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:40Z",
+                "message": "Cloning step 140/215: syncing files and database tables",
+                "percentageComplete": 65.1,
+                "internalStepId": "step-140",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:42Z",
+                "message": "Cloning step 141/215: syncing files and database tables",
+                "percentageComplete": 65.6,
+                "internalStepId": "step-141",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:44Z",
+                "message": "Cloning step 142/215: syncing files and database tables",
+                "percentageComplete": 66.0,
+                "internalStepId": "step-142",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:46Z",
+                "message": "Cloning step 143/215: syncing files and database tables",
+                "percentageComplete": 66.5,
+                "internalStepId": "step-143",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:48Z",
+                "message": "Cloning step 144/215: syncing files and database tables",
+                "percentageComplete": 67.0,
+                "internalStepId": "step-144",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:50Z",
+                "message": "Cloning step 145/215: syncing files and database tables",
+                "percentageComplete": 67.4,
+                "internalStepId": "step-145",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:52Z",
+                "message": "Cloning step 146/215: syncing files and database tables",
+                "percentageComplete": 67.9,
+                "internalStepId": "step-146",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:54Z",
+                "message": "Cloning step 147/215: syncing files and database tables",
+                "percentageComplete": 68.4,
+                "internalStepId": "step-147",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:56Z",
+                "message": "Cloning step 148/215: syncing files and database tables",
+                "percentageComplete": 68.8,
+                "internalStepId": "step-148",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:04:58Z",
+                "message": "Cloning step 149/215: syncing files and database tables",
+                "percentageComplete": 69.3,
+                "internalStepId": "step-149",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:00Z",
+                "message": "Cloning step 150/215: syncing files and database tables",
+                "percentageComplete": 69.8,
+                "internalStepId": "step-150",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:02Z",
+                "message": "Cloning step 151/215: syncing files and database tables",
+                "percentageComplete": 70.2,
+                "internalStepId": "step-151",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:04Z",
+                "message": "Cloning step 152/215: syncing files and database tables",
+                "percentageComplete": 70.7,
+                "internalStepId": "step-152",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:06Z",
+                "message": "Cloning step 153/215: syncing files and database tables",
+                "percentageComplete": 71.2,
+                "internalStepId": "step-153",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:08Z",
+                "message": "Cloning step 154/215: syncing files and database tables",
+                "percentageComplete": 71.6,
+                "internalStepId": "step-154",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:10Z",
+                "message": "Cloning step 155/215: syncing files and database tables",
+                "percentageComplete": 72.1,
+                "internalStepId": "step-155",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:12Z",
+                "message": "Cloning step 156/215: syncing files and database tables",
+                "percentageComplete": 72.6,
+                "internalStepId": "step-156",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:14Z",
+                "message": "Cloning step 157/215: syncing files and database tables",
+                "percentageComplete": 73.0,
+                "internalStepId": "step-157",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:16Z",
+                "message": "Cloning step 158/215: syncing files and database tables",
+                "percentageComplete": 73.5,
+                "internalStepId": "step-158",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:18Z",
+                "message": "Cloning step 159/215: syncing files and database tables",
+                "percentageComplete": 74.0,
+                "internalStepId": "step-159",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:20Z",
+                "message": "Cloning step 160/215: syncing files and database tables",
+                "percentageComplete": 74.4,
+                "internalStepId": "step-160",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:22Z",
+                "message": "Cloning step 161/215: syncing files and database tables",
+                "percentageComplete": 74.9,
+                "internalStepId": "step-161",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:24Z",
+                "message": "Cloning step 162/215: syncing files and database tables",
+                "percentageComplete": 75.3,
+                "internalStepId": "step-162",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:26Z",
+                "message": "Cloning step 163/215: syncing files and database tables",
+                "percentageComplete": 75.8,
+                "internalStepId": "step-163",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:28Z",
+                "message": "Cloning step 164/215: syncing files and database tables",
+                "percentageComplete": 76.3,
+                "internalStepId": "step-164",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:30Z",
+                "message": "Cloning step 165/215: syncing files and database tables",
+                "percentageComplete": 76.7,
+                "internalStepId": "step-165",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:32Z",
+                "message": "Cloning step 166/215: syncing files and database tables",
+                "percentageComplete": 77.2,
+                "internalStepId": "step-166",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:34Z",
+                "message": "Cloning step 167/215: syncing files and database tables",
+                "percentageComplete": 77.7,
+                "internalStepId": "step-167",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:36Z",
+                "message": "Cloning step 168/215: syncing files and database tables",
+                "percentageComplete": 78.1,
+                "internalStepId": "step-168",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:38Z",
+                "message": "Cloning step 169/215: syncing files and database tables",
+                "percentageComplete": 78.6,
+                "internalStepId": "step-169",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:40Z",
+                "message": "Cloning step 170/215: syncing files and database tables",
+                "percentageComplete": 79.1,
+                "internalStepId": "step-170",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:42Z",
+                "message": "Cloning step 171/215: syncing files and database tables",
+                "percentageComplete": 79.5,
+                "internalStepId": "step-171",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:44Z",
+                "message": "Cloning step 172/215: syncing files and database tables",
+                "percentageComplete": 80.0,
+                "internalStepId": "step-172",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:46Z",
+                "message": "Cloning step 173/215: syncing files and database tables",
+                "percentageComplete": 80.5,
+                "internalStepId": "step-173",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:48Z",
+                "message": "Cloning step 174/215: syncing files and database tables",
+                "percentageComplete": 80.9,
+                "internalStepId": "step-174",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:50Z",
+                "message": "Cloning step 175/215: syncing files and database tables",
+                "percentageComplete": 81.4,
+                "internalStepId": "step-175",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:52Z",
+                "message": "Cloning step 176/215: syncing files and database tables",
+                "percentageComplete": 81.9,
+                "internalStepId": "step-176",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:54Z",
+                "message": "Cloning step 177/215: syncing files and database tables",
+                "percentageComplete": 82.3,
+                "internalStepId": "step-177",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:56Z",
+                "message": "Cloning step 178/215: syncing files and database tables",
+                "percentageComplete": 82.8,
+                "internalStepId": "step-178",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:05:58Z",
+                "message": "Cloning step 179/215: syncing files and database tables",
+                "percentageComplete": 83.3,
+                "internalStepId": "step-179",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:00Z",
+                "message": "Cloning step 180/215: syncing files and database tables",
+                "percentageComplete": 83.7,
+                "internalStepId": "step-180",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:02Z",
+                "message": "Cloning step 181/215: syncing files and database tables",
+                "percentageComplete": 84.2,
+                "internalStepId": "step-181",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:04Z",
+                "message": "Cloning step 182/215: syncing files and database tables",
+                "percentageComplete": 84.7,
+                "internalStepId": "step-182",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:06Z",
+                "message": "Cloning step 183/215: syncing files and database tables",
+                "percentageComplete": 85.1,
+                "internalStepId": "step-183",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:08Z",
+                "message": "Cloning step 184/215: syncing files and database tables",
+                "percentageComplete": 85.6,
+                "internalStepId": "step-184",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:10Z",
+                "message": "Cloning step 185/215: syncing files and database tables",
+                "percentageComplete": 86.0,
+                "internalStepId": "step-185",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:12Z",
+                "message": "Cloning step 186/215: syncing files and database tables",
+                "percentageComplete": 86.5,
+                "internalStepId": "step-186",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:14Z",
+                "message": "Cloning step 187/215: syncing files and database tables",
+                "percentageComplete": 87.0,
+                "internalStepId": "step-187",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:16Z",
+                "message": "Cloning step 188/215: syncing files and database tables",
+                "percentageComplete": 87.4,
+                "internalStepId": "step-188",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:18Z",
+                "message": "Cloning step 189/215: syncing files and database tables",
+                "percentageComplete": 87.9,
+                "internalStepId": "step-189",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:20Z",
+                "message": "Cloning step 190/215: syncing files and database tables",
+                "percentageComplete": 88.4,
+                "internalStepId": "step-190",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:22Z",
+                "message": "Cloning step 191/215: syncing files and database tables",
+                "percentageComplete": 88.8,
+                "internalStepId": "step-191",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:24Z",
+                "message": "Cloning step 192/215: syncing files and database tables",
+                "percentageComplete": 89.3,
+                "internalStepId": "step-192",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:26Z",
+                "message": "Cloning step 193/215: syncing files and database tables",
+                "percentageComplete": 89.8,
+                "internalStepId": "step-193",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:28Z",
+                "message": "Cloning step 194/215: syncing files and database tables",
+                "percentageComplete": 90.2,
+                "internalStepId": "step-194",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:30Z",
+                "message": "Cloning step 195/215: syncing files and database tables",
+                "percentageComplete": 90.7,
+                "internalStepId": "step-195",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:32Z",
+                "message": "Cloning step 196/215: syncing files and database tables",
+                "percentageComplete": 91.2,
+                "internalStepId": "step-196",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:34Z",
+                "message": "Cloning step 197/215: syncing files and database tables",
+                "percentageComplete": 91.6,
+                "internalStepId": "step-197",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:36Z",
+                "message": "Cloning step 198/215: syncing files and database tables",
+                "percentageComplete": 92.1,
+                "internalStepId": "step-198",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:38Z",
+                "message": "Cloning step 199/215: syncing files and database tables",
+                "percentageComplete": 92.6,
+                "internalStepId": "step-199",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:40Z",
+                "message": "Cloning step 200/215: syncing files and database tables",
+                "percentageComplete": 93.0,
+                "internalStepId": "step-200",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:42Z",
+                "message": "Cloning step 201/215: syncing files and database tables",
+                "percentageComplete": 93.5,
+                "internalStepId": "step-201",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:44Z",
+                "message": "Cloning step 202/215: syncing files and database tables",
+                "percentageComplete": 94.0,
+                "internalStepId": "step-202",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:46Z",
+                "message": "Cloning step 203/215: syncing files and database tables",
+                "percentageComplete": 94.4,
+                "internalStepId": "step-203",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:48Z",
+                "message": "Cloning step 204/215: syncing files and database tables",
+                "percentageComplete": 94.9,
+                "internalStepId": "step-204",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:50Z",
+                "message": "Cloning step 205/215: syncing files and database tables",
+                "percentageComplete": 95.3,
+                "internalStepId": "step-205",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:52Z",
+                "message": "Cloning step 206/215: syncing files and database tables",
+                "percentageComplete": 95.8,
+                "internalStepId": "step-206",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:54Z",
+                "message": "Cloning step 207/215: syncing files and database tables",
+                "percentageComplete": 96.3,
+                "internalStepId": "step-207",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:56Z",
+                "message": "Cloning step 208/215: syncing files and database tables",
+                "percentageComplete": 96.7,
+                "internalStepId": "step-208",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:06:58Z",
+                "message": "Cloning step 209/215: syncing files and database tables",
+                "percentageComplete": 97.2,
+                "internalStepId": "step-209",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:07:00Z",
+                "message": "Cloning step 210/215: syncing files and database tables",
+                "percentageComplete": 97.7,
+                "internalStepId": "step-210",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:07:02Z",
+                "message": "Cloning step 211/215: syncing files and database tables",
+                "percentageComplete": 98.1,
+                "internalStepId": "step-211",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:07:04Z",
+                "message": "Cloning step 212/215: syncing files and database tables",
+                "percentageComplete": 98.6,
+                "internalStepId": "step-212",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:07:06Z",
+                "message": "Cloning step 213/215: syncing files and database tables",
+                "percentageComplete": 99.1,
+                "internalStepId": "step-213",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:07:08Z",
+                "message": "Cloning step 214/215: syncing files and database tables",
+                "percentageComplete": 99.5,
+                "internalStepId": "step-214",
+                "workerHost": "clone-worker-01.internal"
+              },
+              {
+                "createdAt": "2026-11-25T03:07:10Z",
+                "message": "Cloning step 215/215: syncing files and database tables",
+                "percentageComplete": 100.0,
+                "internalStepId": "step-215",
+                "workerHost": "clone-worker-01.internal"
+              }
+            ]
+          },
+          {
+            "id": "clone-rahul-002",
+            "sourceWebsiteId": "site-rahul-001",
+            "destWebsiteId": "site-rahul-staging-002",
+            "status": "inProgress",
+            "internalWorkerId": "worker-clone-02",
+            "rsyncToken": "internal-rsync-token-002",
+            "notes": "Secondary QA clone",
+            "log": [
+              {
+                "createdAt": "2026-11-26T08:00:00Z",
+                "message": "Clone job queued on worker-clone-02",
+                "percentageComplete": 0,
+                "internalStepId": "step-001",
+                "workerHost": "clone-worker-02.internal"
+              },
+              {
+                "createdAt": "2026-11-26T08:00:15Z",
+                "message": "Provisioning destination container site-rahul-staging-002",
+                "percentageComplete": 25,
+                "internalStepId": "step-002",
+                "workerHost": "clone-worker-02.internal"
+              },
+              {
+                "createdAt": "2026-11-26T08:00:40Z",
+                "message": "Copying wp-content assets",
+                "percentageComplete": 55,
+                "internalStepId": "step-003",
+                "workerHost": "clone-worker-02.internal"
+              }
+            ]
+          }
+        ],
+        "cloudflareDomains": {
+          "domain-rahul-001": {
+            "configured": true,
+            "nameServers": [
+              "arya.ns.cloudflare.com",
+              "carl.ns.cloudflare.com"
+            ],
+            "status": "active",
+            "cloudflareZoneId": "cf-zone-rahul-001",
+            "cloudflareTokenId": "cf-token-001",
+            "internalNote": "Connected Cloudflare DNS"
+          },
+          "domain-2001": {
+            "configured": true,
+            "nameServers": [
+              "arya.ns.cloudflare.com",
+              "carl.ns.cloudflare.com"
+            ],
+            "status": "active",
+            "cloudflareZoneId": "cf-zone-rahul-001",
+            "cloudflareTokenId": "cf-token-001",
+            "internalNote": "Connected Cloudflare DNS"
+          },
+          "domain-rahul-002": {
+            "configured": false
+          }
+        }
       },
       "subscription": {
         "id": 5001,
@@ -61,7 +1670,9 @@
         "server": "in-mock-01",
         "appId": "app-rahul-wp-001",
         "domainId": "domain-rahul-001",
-        "additionalDomainIds": ["domain-rahul-002"],
+        "additionalDomainIds": [
+          "domain-rahul-002"
+        ],
         "accessInfo": {
           "ftp": {
             "enabled": true,
@@ -84,7 +1695,16 @@
             "repositoryUrl": "https://git.example/rahul/cloud-site.git",
             "branch": "main",
             "status": "succeeded",
-            "completedAt": "2026-11-25T08:15:00Z"
+            "completedAt": "2026-11-25T08:15:00Z",
+            "log": "[2026-11-25T08:14:01Z] Starting deployment deploy-rahul-001\n[2026-11-25T08:14:03Z] Cloning https://deployuser:fakePass123@git.example/rahul/cloud-site.git\n[2026-11-25T08:14:15Z] Exporting env API_KEY=abc123\n-----BEGIN RSA PRIVATE KEY-----\nMOCK_FAKE_KEY_LINE_FOR_REDACTION_TESTING_ONLY\n-----END RSA PRIVATE KEY-----\n[2026-11-25T08:15:00Z] Deployment succeeded."
+          },
+          {
+            "id": "deploy-rahul-002",
+            "repositoryUrl": "https://git.example/rahul/cloud-site.git",
+            "branch": "staging",
+            "status": "failed",
+            "completedAt": "2026-11-26T06:10:00Z",
+            "log": "[2026-11-26T06:09:10Z] Starting deployment deploy-rahul-002\n[2026-11-26T06:09:12Z] Fetching https://ci:tok987@git.example/rahul/cloud-site.git\n[2026-11-26T06:09:20Z] Build variable API_KEY=abc123\n-----BEGIN PRIVATE KEY-----\nFAKE_TEST_BLOCK_DO_NOT_USE\n-----END PRIVATE KEY-----\n[2026-11-26T06:10:00Z] Build failed with exit code 1."
           }
         ],
         "phpInfo": {
@@ -129,7 +1749,191 @@
           "siteUrl": "https://rahulcloud.example",
           "version": "6.8.3",
           "status": "active"
-        }
+        },
+        "emails": [
+          {
+            "id": "mbx-rahul-001",
+            "mailboxName": "hello",
+            "address": "hello@rahulcloud.example",
+            "hasMailbox": true,
+            "status": "active",
+            "quota": {
+              "usage": 5242880,
+              "total": 1073741824
+            },
+            "isCatchAll": false,
+            "passwordHash": "internal-redacted-hash-001",
+            "internalNotes": "Primary mailbox with autoresponder enabled",
+            "clientConf": {
+              "imap": {
+                "host": "mail.rahulcloud.example",
+                "port": 993,
+                "security": "SSL/TLS"
+              },
+              "pop3": {
+                "host": "mail.rahulcloud.example",
+                "port": 995,
+                "security": "SSL/TLS"
+              },
+              "smtp": {
+                "host": "mail.rahulcloud.example",
+                "port": 465,
+                "security": "SSL/TLS"
+              },
+              "username": "hello@rahulcloud.example",
+              "internalMailServerId": "mail-srv-01",
+              "authToken": "internal-autoconf-token-001"
+            },
+            "autoresponder": {
+              "id": "ar-rahul-001",
+              "enabled": true,
+              "startDate": "2026-11-20",
+              "endDate": "2026-12-05",
+              "subject": "Out of office notice",
+              "body": "Thank you for your email. I am away until December 5.",
+              "internalNote": "Configured by owner"
+            }
+          },
+          {
+            "id": "mbx-rahul-002",
+            "mailboxName": "support",
+            "address": "support@rahulcloud.example",
+            "hasMailbox": true,
+            "status": "active",
+            "quota": {
+              "usage": 1048576,
+              "total": 1073741824
+            },
+            "isCatchAll": true,
+            "passwordHash": "internal-redacted-hash-002",
+            "internalNotes": "Support mailbox without autoresponder",
+            "clientConf": {
+              "imap": {
+                "host": "mail.rahulcloud.example",
+                "port": 993,
+                "security": "SSL/TLS"
+              },
+              "pop3": {
+                "host": "mail.rahulcloud.example",
+                "port": 995,
+                "security": "SSL/TLS"
+              },
+              "smtp": {
+                "host": "mail.rahulcloud.example",
+                "port": 465,
+                "security": "SSL/TLS"
+              },
+              "username": "support@rahulcloud.example",
+              "internalMailServerId": "mail-srv-01",
+              "authToken": "internal-autoconf-token-002"
+            },
+            "autoresponder": {
+              "enabled": false,
+              "startDate": null,
+              "endDate": null
+            }
+          }
+        ],
+        "serverDomains": {
+          "appServerDomains": [
+            "app01.in-mock-01.milesweb.example"
+          ],
+          "emailServerDomains": [
+            "mail01.in-mock-01.milesweb.example"
+          ],
+          "dbServerDomains": [
+            "db01.in-mock-01.milesweb.example"
+          ],
+          "internalIps": [
+            "10.20.30.40"
+          ],
+          "controlPanelToken": "internal-cp-token-001"
+        },
+        "htaccessRewrites": {
+          "items": [
+            {
+              "lineNumber": 1,
+              "rule": {
+                "pattern": "^old-page/?$",
+                "substitution": "/new-page",
+                "flags": [
+                  "R=301",
+                  "L"
+                ]
+              },
+              "conds": [
+                {
+                  "testString": "%{HTTPS}",
+                  "condPattern": "off",
+                  "flags": [
+                    "NC"
+                  ]
+                }
+              ],
+              "internalRuleId": "rw-001",
+              "notes": "Legacy redirect"
+            },
+            {
+              "lineNumber": 2,
+              "rule": {
+                "pattern": "^webhook/?$",
+                "substitution": "https://hooks.example/ingest?api_key=abc123",
+                "flags": [
+                  "P",
+                  "L"
+                ]
+              },
+              "conds": [],
+              "internalRuleId": "rw-002",
+              "notes": "Webhook proxy rule"
+            }
+          ],
+          "internalFileHash": "htaccess-sha256-mock"
+        },
+        "htaccessIps": {
+          "kind": "block",
+          "ips": [
+            "203.0.113.10",
+            "198.51.100.77"
+          ],
+          "internalRuleId": "ip-rule-001",
+          "notes": "Blocked abusive scanner IPs"
+        },
+        "screenshotTimestamps": {
+          "domain-rahul-001": {
+            "seconds": 1764057600,
+            "internalStorageKey": "screenshots/site-rahul-001/domain-rahul-001.png",
+            "workerNode": "shot-worker-01"
+          },
+          "domain-rahul-002": {
+            "seconds": 1764057660,
+            "internalStorageKey": "screenshots/site-rahul-001/domain-rahul-002.png",
+            "workerNode": "shot-worker-02"
+          }
+        },
+        "apps": [
+          {
+            "id": "app-rahul-wp-001",
+            "name": "WordPress",
+            "kind": "wordpress",
+            "status": "active"
+          },
+          {
+            "id": "app-rahul-joomla-001",
+            "name": "Joomla",
+            "kind": "joomla",
+            "status": "active",
+            "joomlaInfo": {
+              "version": "5.2.0",
+              "site_url": "https://rahulcloud.example/portal",
+              "plugin_count": 14,
+              "user_count": 6,
+              "adminEmail": "admin@rahulcloud.example",
+              "dbPrefix": "jos_",
+              "secretKey": "joomla-internal-secret-do-not-expose"
+            }
+          }
+        ]
       }
     },
     {
@@ -190,7 +1994,38 @@
         "ownerEmail": "amit@example.com",
         "subscriptionsCount": 1,
         "websitesCount": 1,
-        "createdAt": "2024-08-21T10:30:00Z"
+        "createdAt": "2024-08-21T10:30:00Z",
+        "members": [
+          {
+            "id": "login-amit-001",
+            "name": "Amit Patil",
+            "roles": [
+              "Owner"
+            ],
+            "isActive": true,
+            "joinedAt": "2024-08-21",
+            "email": "amit@example.com",
+            "siteAccess": [
+              "site-amit-001"
+            ],
+            "internalNotes": "Amit org owner"
+          }
+        ],
+        "websiteClones": [],
+        "cloudflareDomains": {
+          "domain-amit-001": {
+            "configured": false
+          },
+          "domain-2002": {
+            "configured": false
+          },
+          "domain-2003": {
+            "configured": false
+          },
+          "domain-2004": {
+            "configured": false
+          }
+        }
       },
       "subscription": {
         "id": 5002,
@@ -247,7 +2082,47 @@
           "siteUrl": "https://amitworkspace.example",
           "version": "6.8.3",
           "status": "active"
-        }
+        },
+        "emails": [
+          {
+            "id": "mbx-amit-001",
+            "mailboxName": "info",
+            "address": "info@amitworkspace.example",
+            "hasMailbox": true,
+            "status": "active",
+            "quota": {
+              "usage": 2097152,
+              "total": 1073741824
+            },
+            "isCatchAll": false,
+            "clientConf": {
+              "imap": {
+                "host": "mail.amitworkspace.example",
+                "port": 993,
+                "security": "SSL/TLS"
+              },
+              "smtp": {
+                "host": "mail.amitworkspace.example",
+                "port": 465,
+                "security": "SSL/TLS"
+              },
+              "username": "info@amitworkspace.example"
+            },
+            "autoresponder": {
+              "enabled": false,
+              "startDate": null,
+              "endDate": null
+            }
+          }
+        ],
+        "apps": [
+          {
+            "id": "app-amit-wp-001",
+            "name": "WordPress",
+            "kind": "wordpress",
+            "status": "active"
+          }
+        ]
       }
     },
     {
@@ -344,7 +2219,35 @@
         "ownerEmail": "neha@example.com",
         "subscriptionsCount": 1,
         "websitesCount": 1,
-        "createdAt": "2025-01-14T08:15:00Z"
+        "createdAt": "2025-01-14T08:15:00Z",
+        "members": [
+          {
+            "id": "login-neha-001",
+            "name": "Neha Kulkarni",
+            "roles": [
+              "Owner"
+            ],
+            "isActive": true,
+            "joinedAt": "2025-01-14",
+            "email": "neha@example.com",
+            "siteAccess": [
+              "site-neha-001"
+            ],
+            "internalNotes": "Neha org owner"
+          }
+        ],
+        "websiteClones": [],
+        "cloudflareDomains": {
+          "domain-neha-001": {
+            "configured": true,
+            "nameServers": [
+              "duke.ns.cloudflare.com",
+              "lisa.ns.cloudflare.com"
+            ],
+            "status": "pending",
+            "cloudflareZoneId": "cf-zone-neha-001"
+          }
+        }
       },
       "subscription": {
         "id": 5003,
@@ -363,7 +2266,47 @@
         "server": "in-mock-03",
         "appId": "app-neha-wp-001",
         "domainId": "domain-neha-001",
-        "additionalDomainIds": []
+        "additionalDomainIds": [],
+        "emails": [
+          {
+            "id": "mbx-neha-001",
+            "mailboxName": "orders",
+            "address": "orders@nehastore.example",
+            "hasMailbox": true,
+            "status": "active",
+            "quota": {
+              "usage": 4194304,
+              "total": 1073741824
+            },
+            "isCatchAll": false,
+            "clientConf": {
+              "imap": {
+                "host": "mail.nehastore.example",
+                "port": 993,
+                "security": "SSL/TLS"
+              },
+              "smtp": {
+                "host": "mail.nehastore.example",
+                "port": 465,
+                "security": "SSL/TLS"
+              },
+              "username": "orders@nehastore.example"
+            },
+            "autoresponder": {
+              "enabled": false,
+              "startDate": null,
+              "endDate": null
+            }
+          }
+        ],
+        "apps": [
+          {
+            "id": "app-neha-wp-001",
+            "name": "WordPress",
+            "kind": "wordpress",
+            "status": "active"
+          }
+        ]
       }
     },
     {
@@ -401,6 +2344,42 @@
         "locale": "en-IN"
       },
       "organization": null,
+      "subscription": null,
+      "website": null
+    },
+    {
+      "clientId": 12350,
+      "name": "Vikram Mehta",
+      "email": "vikram@example.com",
+      "password_hash": "pbkdf2_sha256:dc763d1ed59e99059362884e9eb95fa8:d31abbf2babe105820405f683cfad8a6ffae5ea2ccdcb8f4bc080786b262a20b",
+      "status": "Active",
+      "hostingServices": [],
+      "domains": [],
+      "login": {
+        "id": "login-vikram-001",
+        "email": "vikram@example.com",
+        "name": "Vikram Mehta",
+        "colorCode": "#0ea5e9",
+        "registeredAt": "2026-01-15T10:00:00Z",
+        "authMethod": "basic",
+        "locale": "en-IN"
+      },
+      "organization": {
+        "id": "org-rahul-001",
+        "name": "Rahul Cloud Studio",
+        "status": "active",
+        "owner": "Rahul Sharma",
+        "ownerEmail": "rahul@example.com",
+        "subscriptionsCount": 1,
+        "websitesCount": 1,
+        "createdAt": "2025-03-12T09:00:00Z"
+      },
+      "memberRoles": [
+        "SiteAccess"
+      ],
+      "memberSiteAccess": [
+        "site-rahul-001"
+      ],
       "subscription": null,
       "website": null
     }

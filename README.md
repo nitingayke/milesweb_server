@@ -12,11 +12,12 @@ Claude / ChatGPT
       ▼  MCP protocol
 MCP Server  (milesweb_mcp — deployed on Render)
       │
-      ▼  HTTP  (X-Connector-Key + Bearer token)
-This mock backend  (enhance-mock-api — port 8000)
+      ├──► HTTP  (X-Connector-Key + Bearer token) ──► Enhance & Connector endpoints
+      │
+      └──► POST /includes/api.php (form-encoded username/password) ──► WHMCS mock
       │
       ▼  reads
-data/customers.json  (fixture data — never written)
+data/customers.json & data/whmcs.json  (fixture data — never written)
 ```
 
 The MCP server never trusts a raw `clientId` argument from the AI. It derives the customer identity from the verified Bearer JWT and passes it to this service using the shared `CONNECTOR_API_KEY`.
@@ -35,17 +36,23 @@ app/
   routers/
     auth_router.py           /auth login and token verification endpoints
     customer_router.py       /api/v1/connector/customer endpoints
-    phase2_router.py         35 Phase 2 Enhance mock GET operations
+    phase2_router.py         58 Enhance mock GET operations (42 base + 16 extra)
+    whmcs_router.py          POST /includes/api.php WHMCS mock endpoint
   services/
-    phase2_catalog.py        Enhance mock data provider + tenant isolation
+    phase2_catalog.py        Enhance mock data provider + tenant/role isolation
     token_service.py         JWT creation and verification (HS256, PBKDF2)
+    whmcs_service.py         WHMCS mock billing & support data provider
 data/
-  customers.json             single consolidated fixture (users + hosting + Enhance data)
+  customers.json             users, hosting, and Enhance fixture data
+  whmcs.json                 WHMCS clients, invoices, products, and tickets
 tests/
   conftest.py                shared fixtures and test client setup
   test_auth.py               authentication, JWT, login tests
   test_customer_connector.py connector API and tenant isolation tests
   test_phase2_catalog.py     Phase 2 operations and authorization tests
+  test_new_batch_endpoints.py 7 batch Enhance operations tests
+  test_enhance_extra.py      16 additional Enhance GET operations & role tests
+  test_whmcs.py              WHMCS mock API & fixture integrity tests
   test_audit_gaps.py         edge-case and regression tests
 requirements.txt
 .env.example
@@ -75,6 +82,8 @@ Browse the full interactive API docs at **http://127.0.0.1:8000/docs**.
 | `CONNECTOR_API_KEY` | Shared secret authenticating the MCP server to this backend |
 | `JWT_SECRET_KEY` | HS256 signing key for dynamic access tokens |
 | `PHASE2_TEST_TOKENS` | Comma-separated `token:clientId` pairs for local mock testing without login |
+| `MOCK_WHMCS_IDENTIFIER` | WHMCS API `username` form field accepted by `POST /includes/api.php` |
+| `MOCK_WHMCS_SECRET` | WHMCS API `password` form field accepted by `POST /includes/api.php` |
 
 > [!IMPORTANT]
 > `CONNECTOR_API_KEY` grants access to all customer data. Keep it out of logs, version control, and client-side code. Reference `.env.example` for the required format.
@@ -90,6 +99,7 @@ Browse the full interactive API docs at **http://127.0.0.1:8000/docs**.
 | `GET /auth/me`, `/auth/verify` | `Authorization: Bearer <token>` |
 | `/api/v1/connector/*` | `X-Connector-Key: <CONNECTOR_API_KEY>` |
 | `/orgs/…`, `/login`, `/v2/…`, `/websites/…` (Phase 2) | **Both:** `X-Connector-Key` + `Authorization: Bearer <token>` |
+| `POST /includes/api.php` (WHMCS mock) | Form fields `username` (`MOCK_WHMCS_IDENTIFIER`) + `password` (`MOCK_WHMCS_SECRET`); no connector key or Bearer |
 
 ---
 
@@ -114,15 +124,16 @@ Browse the full interactive API docs at **http://127.0.0.1:8000/docs**.
 
 #### Demo accounts
 
-All five fixture customers share password `password123`. Passwords are stored as **PBKDF2-SHA256** hashes (stdlib `hashlib`, 260 000 iterations) — no plaintext stored.
+All six fixture accounts share password `password123`. Passwords are stored as **PBKDF2-SHA256** hashes (stdlib `hashlib`, 260 000 iterations) — no plaintext stored.
 
-| Email | Client ID | Scenario |
-| --- | --- | --- |
-| `rahul@example.com` | `12345` | Active org, 1 website, 1 subscription, 1 domain |
-| `amit@example.com` | `12346` | Active org, 1 website, 3 domains (1 Pending, 1 Expired) |
-| `priya@example.com` | `12347` | No hosting, no domains |
-| `neha@example.com` | `12348` | Suspended website, 4 domains, 2 hosting services |
-| `karan@example.com` | `12349` | No hosting, 2 domains only |
+| Email | Client ID | Enhance Scenario | WHMCS Billing & Support Scenario |
+| --- | --- | --- | --- |
+| `rahul@example.com` | `12345` | Active org (`Owner`), 1 website, 2 mailboxes (1 autoresponder on, 1 off), Cloudflare configured + non-configured domain, 2 git deployments (with fake secrets in logs), htaccess rewrites & IP rules, WordPress + Joomla apps, 2 clone jobs (1 with 215-line log), 2 org members | 4 invoices (`Paid`, `Unpaid`, `Overdue`, `Cancelled`), 2 products, 3 tickets (1 multi-reply with staff note & attachment, 1 `Closed`, 1 `Customer-Reply`) |
+| `amit@example.com` | `12346` | Active org (`Owner`), 1 website, 3 domains (1 Pending, 1 Expired), Cloudflare unconfigured, 0 clone jobs | 2 invoices, 1 product (triggers single-object quirk), 1 ticket (triggers single-object quirk) |
+| `priya@example.com` | `12347` | No hosting, no domains (no Enhance org) | 2 invoices, 1 product, 1 ticket (proves WHMCS billing/support works without Enhance) |
+| `neha@example.com` | `12348` | Active org (`Owner`), suspended website, 4 domains, 2 hosting services, Cloudflare pending | 3 invoices, 2 products, 0 tickets (`""` empty quirk) |
+| `karan@example.com` | `12349` | No hosting, 2 domains only | 0 invoices, 0 products, 0 tickets (`""` empty quirk on all lists) |
+| `vikram@example.com` | `12350` | Non-admin member (`SiteAccess`) of Rahul's org (`org-rahul-001`) — receives `403` on `/members` | Not a billing client |
 
 ```powershell
 # 1. Login and capture the token
@@ -224,6 +235,49 @@ curl.exe `
 > [!NOTE]
 > The `granularity` query parameter on `getWebsiteMetrics` is passed through to the fixture response so the MCP server can request `daily` or `hourly` data.
 
+#### Additional Enhance GET Operations (16 endpoints)
+
+These 16 endpoints follow the same `X-Connector-Key` + `Authorization: Bearer <token>` authentication and tenant isolation rules (another customer's resource returns `404`), plus resource-specific rules: `email_address` must belong to the website, `deployment_id` must belong to the website, `clone_id` must belong to the org, `getMembers` returns `403` unless the caller's role is `Owner` or `Admin`/`SuperAdmin` (while `getMember` allows `Owner`/`Admin` or the member themself), and `getJoomlaInfo` returns `400` if the `app_id` is not Joomla.
+
+| Operation name | Path | Proposed MCP tool |
+| --- | --- | --- |
+| `getWebsiteEmail` | `GET /orgs/{org_id}/websites/{website_id}/emails/{email_address}` | `get_website_email_details` |
+| `getWebsiteEmailClientConf` | `GET /orgs/{org_id}/websites/{website_id}/emails/{email_address}/client-conf` | `get_website_email_client_config` |
+| `getWebsiteEmailAutoresponder` | `GET /orgs/{org_id}/websites/{website_id}/emails/{email_address}/autoresponder` | `get_website_email_autoresponder` |
+| `getWebsiteDomainDnsQuery` | `GET /orgs/{org_id}/websites/{website_id}/domains/{domain_id}/dns-query` | `query_website_domain_dns` |
+| `getCloudflareNameServers` | `GET /orgs/{org_id}/domains/{domain_id}/cloudflare/nameservers` | `get_cloudflare_nameservers` |
+| `getWebsiteServerDomains` | `GET /orgs/{org_id}/websites/{website_id}/server_domains` | `get_website_server_domains` |
+| `getWebsiteGitDeploymentLog` | `GET /orgs/{org_id}/websites/{website_id}/git/deploys/{deployment_id}` | `get_website_git_deployment_log` |
+| `getWebsiteHtaccessRewrites` | `GET /orgs/{org_id}/websites/{website_id}/htaccess` | `get_website_rewrite_rules` |
+| `getWebsiteHtaccessIpsRule` | `GET /orgs/{org_id}/websites/{website_id}/htaccess/ips` | `get_website_ip_access_rules` |
+| `getScreenshotTimestamp` | `GET /orgs/{org_id}/websites/{website_id}/domains/{domain_id}/screenshot/timestamp` | `get_website_screenshot_timestamp` |
+| `getJoomlaInfo` | `GET /orgs/{org_id}/websites/{website_id}/apps/{app_id}/joomla/info` | `get_joomla_details` |
+| `getWebsiteClones` | `GET /orgs/{org_id}/websites/clone` | `list_website_clone_jobs` |
+| `getWebsiteClone` | `GET /orgs/{org_id}/websites/clone/{clone_id}` | `get_website_clone_job` |
+| `getWebsiteCloneLog` | `GET /orgs/{org_id}/websites/clone/{clone_id}/log` | `get_website_clone_log` |
+| `getMembers` | `GET /orgs/{org_id}/members` | `list_organization_members` |
+| `getMember` | `GET /orgs/{org_id}/members/{member_id}` | `get_organization_member` |
+
+---
+
+### 5. WHMCS Mock API (`POST /includes/api.php`)
+
+Simulates the WHMCS external API using `application/x-www-form-urlencoded` `POST` requests (other HTTP methods return `405`). Authenticates via form fields `username` and `password` against `MOCK_WHMCS_IDENTIFIER` and `MOCK_WHMCS_SECRET` (no connector key or Bearer header). Accepts `responsetype=json` and ignores `accesskey`. Wrong credentials return `{"result":"error","message":"Authentication Failed"}`.
+
+> [!WARNING]
+> **Ownership is intentionally NOT enforced by the WHMCS mock on `GetInvoice` or `GetTicket`.** Just like real WHMCS admin API credentials, querying any valid `invoiceid` or `ticketid` returns the record with its true `userid`. The MCP server is responsible for verifying that `userid` matches the authenticated billing client.
+
+| Action | Key parameters | Proposed MCP tool | Notes |
+| --- | --- | --- | --- |
+| `GetClientsDetails` | `email` or `clientid` | — (client resolution) | Returns `result`, `client.id`, `email`; error when unmatched |
+| `GetInvoices` | `userid`, `limitstart`, `limitnum`, `status`, `orderby`, `order` | `list_invoices` | Includes `userid` on each row; returns `""` when empty, single object when 1 row |
+| `GetInvoice` | `invoiceid` | `get_invoice_details` | Returns `userid`, `items.item`, `transactions`, `notes` (for MCP to strip) |
+| `GetClientsProducts` | `clientid`, `limitstart`, `limitnum`, `serviceid` | `list_purchased_products` | Includes `username`, `password`, `dedicatedip`, `customfields` (for MCP to strip) |
+| `GetTickets` | `clientid`, `limitstart`, `limitnum`, `status` | `list_support_tickets` | Includes `userid` on each row; returns `""` when empty, single object when 1 row |
+| `GetTicket` | `ticketid`, `repliessort` | `get_ticket_details` | Returns `userid`, `c`, `attachments`, `replies.reply` with `admin` & `note` flags |
+
+Any other or missing `action` returns `{"result":"error","message":"Invalid or missing action"}`.
+
 ---
 
 ## Security highlights
@@ -247,19 +301,20 @@ curl.exe `
 .\.venv\Scripts\python.exe -m pytest -v
 ```
 
-**105 tests** covering:
-- Login with valid / invalid credentials
+**207 tests** covering:
+- Login with valid / invalid credentials (including non-admin member `vikram@example.com`)
 - Dynamic JWT creation, verification, and expiry
 - `/auth/me` and both `/auth/verify` variants
 - Connector key authentication on all three connector endpoints
 - Field filtering on connector responses
-- All five customer scenarios (active, suspended, no hosting, domains-only)
+- All customer scenarios (active, suspended, no hosting, domains-only, non-admin org member)
 - Phase 2 authorization: own resources accepted, another customer's resources rejected
-- Cross-customer `org_id`, `website_id`, `subscription_id`, `domain_id`, `backup_id` rejection
+- Cross-customer `org_id`, `website_id`, `subscription_id`, `domain_id`, `backup_id`, `app_id`, `email_address`, `deployment_id`, `clone_id` rejection
 - Multi-domain ownership (primary + additional)
-- All 7 newly added batch operations (`getDomains`, `getDomainAuthNs`, `getWebsiteDomainMapping`, `getInstallableApps`, `getWebsiteBackupStatus`, `getWebsiteRestoreStatus`, `getDomainLocalRemote`) with authorized reads and cross-customer rejection
-- `getOrgActivities` endpoint
-- `getWebsiteMetrics` with `granularity` query param
+- All 7 batch operations (`getDomains`, `getDomainAuthNs`, `getWebsiteDomainMapping`, `getInstallableApps`, `getWebsiteBackupStatus`, `getWebsiteRestoreStatus`, `getDomainLocalRemote`)
+- All 16 additional Enhance GET operations (mailboxes/autoresponder/client-conf, DNS query `resolveDepth`, Cloudflare nameservers, server domains, git deployment logs with fake secrets, htaccess rewrites & IP rules, screenshot timestamp, Joomla app info, clone jobs & 215-line clone log, org members `403`/`200`/filters)
+- WHMCS mock API (`POST /includes/api.php`): credential validation, `405` on `GET`, action dispatch, `GetClientsDetails`, `GetInvoices`, `GetInvoice`, `GetClientsProducts`, `GetTickets`, `GetTicket`, empty `""` & single-object quirks, cross-client `GetInvoice`/`GetTicket` returning true `userid`, and fixture integrity checks
+- `getOrgActivities` endpoint and `getWebsiteMetrics` with `granularity` query param
 - `Phase2Catalog.customer()` fallback path
 - Edge cases: missing headers, wrong key, malformed tokens
 
@@ -272,11 +327,12 @@ curl.exe `
 | Auth routes (login, me, verify ×2) | ✅ Complete |
 | `GET /health` | ✅ Complete |
 | Customer connector API (3 endpoints) | ✅ Complete |
-| All 42 Phase 2 Enhance mock operations | ✅ Complete |
-| Tenant isolation for all path parameter types | ✅ Complete |
+| All 58 Phase 2 Enhance mock operations (42 base + 16 extra) | ✅ Complete |
+| WHMCS mock API (`POST /includes/api.php`, 6 actions) | ✅ Complete |
+| Tenant isolation & org role enforcement (`403` for non-admin members) | ✅ Complete |
 | Multi-domain ownership enforcement | ✅ Complete |
 | PBKDF2 password hashing | ✅ Complete |
-| 105 tests — all passing | ✅ Complete |
+| 207 tests — all passing | ✅ Complete |
 | OpenAPI docs at `/docs` | ✅ Complete |
 | Static test token fallback for local dev | ✅ Complete |
 

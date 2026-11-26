@@ -1,0 +1,907 @@
+{
+  "clients": [
+    {
+      "id": 12345,
+      "userid": 12345,
+      "firstname": "Rahul",
+      "lastname": "Sharma",
+      "fullname": "Rahul Sharma",
+      "email": "rahul@example.com",
+      "status": "Active",
+      "currency": 1,
+      "currency_code": "INR",
+      "notes": "VIP hosting account - internal billing note"
+    },
+    {
+      "id": 12346,
+      "userid": 12346,
+      "firstname": "Amit",
+      "lastname": "Patil",
+      "fullname": "Amit Patil",
+      "email": "amit@example.com",
+      "status": "Active",
+      "currency": 1,
+      "currency_code": "INR",
+      "notes": "Standard shared hosting account"
+    },
+    {
+      "id": 12347,
+      "userid": 12347,
+      "firstname": "Priya",
+      "lastname": "Joshi",
+      "fullname": "Priya Joshi",
+      "email": "priya@example.com",
+      "status": "Active",
+      "currency": 1,
+      "currency_code": "INR",
+      "notes": "Billing-only client with no Enhance org"
+    },
+    {
+      "id": 12348,
+      "userid": 12348,
+      "firstname": "Neha",
+      "lastname": "Kulkarni",
+      "fullname": "Neha Kulkarni",
+      "email": "neha@example.com",
+      "status": "Active",
+      "currency": 1,
+      "currency_code": "INR",
+      "notes": "One suspended service"
+    },
+    {
+      "id": 12349,
+      "userid": 12349,
+      "firstname": "Karan",
+      "lastname": "Deshmukh",
+      "fullname": "Karan Deshmukh",
+      "email": "karan@example.com",
+      "status": "Active",
+      "currency": 1,
+      "currency_code": "INR",
+      "notes": "Domain-only client with empty WHMCS history"
+    }
+  ],
+  "invoices": [
+    {
+      "id": 81001,
+      "userid": 12345,
+      "invoicenum": "MW-2026-81001",
+      "status": "Paid",
+      "date": "2026-09-01",
+      "duedate": "2026-09-15",
+      "datepaid": "2026-09-02 10:15:00",
+      "subtotal": "2400.00",
+      "credit": "0.00",
+      "tax": "432.00",
+      "tax2": "0.00",
+      "total": "2832.00",
+      "balance": "0.00",
+      "currencycode": "INR",
+      "paymentmethod": "razorpay",
+      "notes": "Internal gateway ref: rzp_pay_mock001",
+      "items": {
+        "item": [
+          {
+            "id": 910001,
+            "type": "Hosting",
+            "relid": 1001,
+            "description": "Business Hosting - rahulcloud.example (01/09/2026 - 31/08/2027)",
+            "amount": "2400.00",
+            "taxed": 1,
+            "internalSku": "MW-BIZ-1Y"
+          }
+        ]
+      },
+      "transactions": {
+        "transaction": [
+          {
+            "id": 70001,
+            "userid": 12345,
+            "currency": "INR",
+            "gateway": "razorpay",
+            "date": "2026-09-02 10:15:00",
+            "description": "Invoice Payment",
+            "amountin": "2832.00",
+            "fees": "56.64",
+            "transid": "pay_mock_rahul_81001"
+          }
+        ]
+      }
+    },
+    {
+      "id": 81002,
+      "userid": 12345,
+      "invoicenum": "MW-2026-81002",
+      "status": "Unpaid",
+      "date": "2026-11-15",
+      "duedate": "2026-11-30",
+      "datepaid": "0000-00-00 00:00:00",
+      "subtotal": "999.00",
+      "credit": "100.00",
+      "tax": "179.82",
+      "tax2": "0.00",
+      "total": "1178.82",
+      "balance": "1078.82",
+      "currencycode": "INR",
+      "paymentmethod": "razorpay",
+      "notes": "Auto-renewal reminder scheduled",
+      "items": {
+        "item": [
+          {
+            "id": 910002,
+            "type": "Addon",
+            "relid": 1005,
+            "description": "Dedicated SSL & Mail Guard - rahulcloud.example",
+            "amount": "999.00",
+            "taxed": 1,
+            "internalSku": "MW-SSL-1Y"
+          }
+        ]
+      },
+      "transactions": ""
+    },
+    {
+      "id": 81003,
+      "userid": 12345,
+      "invoicenum": "MW-2026-81003",
+      "status": "Overdue",
+      "date": "2026-10-01",
+      "duedate": "2026-10-15",
+      "datepaid": "0000-00-00 00:00:00",
+      "subtotal": "850.00",
+      "credit": "0.00",
+      "tax": "153.00",
+      "tax2": "0.00",
+      "total": "1003.00",
+      "balance": "1003.00",
+      "currencycode": "INR",
+      "paymentmethod": "upi",
+      "notes": "Follow-up overdue notice #2 sent",
+      "items": {
+        "item": [
+          {
+            "id": 910003,
+            "type": "DomainRegister",
+            "relid": 2001,
+            "description": "Domain Renewal - rahulcloud.example",
+            "amount": "850.00",
+            "taxed": 1,
+            "internalSku": "DOM-EX-1Y"
+          }
+        ]
+      },
+      "transactions": ""
+    },
+    {
+      "id": 81004,
+      "userid": 12345,
+      "invoicenum": "MW-2026-81004",
+      "status": "Cancelled",
+      "date": "2026-08-05",
+      "duedate": "2026-08-19",
+      "datepaid": "0000-00-00 00:00:00",
+      "subtotal": "500.00",
+      "credit": "0.00",
+      "tax": "90.00",
+      "tax2": "0.00",
+      "total": "590.00",
+      "balance": "0.00",
+      "currencycode": "INR",
+      "paymentmethod": "banktransfer",
+      "notes": "Cancelled duplicate order",
+      "items": {
+        "item": [
+          {
+            "id": 910004,
+            "type": "Setup",
+            "relid": 0,
+            "description": "One-time Migration Service (Cancelled)",
+            "amount": "500.00",
+            "taxed": 1,
+            "internalSku": "MW-MIG-1"
+          }
+        ]
+      },
+      "transactions": ""
+    },
+    {
+      "id": 82001,
+      "userid": 12346,
+      "invoicenum": "MW-2026-82001",
+      "status": "Paid",
+      "date": "2026-09-10",
+      "duedate": "2026-09-24",
+      "datepaid": "2026-09-11 14:22:00",
+      "subtotal": "1200.00",
+      "credit": "0.00",
+      "tax": "216.00",
+      "tax2": "0.00",
+      "total": "1416.00",
+      "balance": "0.00",
+      "currencycode": "INR",
+      "paymentmethod": "razorpay",
+      "notes": "Paid in full by Amit",
+      "items": {
+        "item": [
+          {
+            "id": 920001,
+            "type": "Hosting",
+            "relid": 1002,
+            "description": "Shared Hosting - amitworkspace.example",
+            "amount": "1200.00",
+            "taxed": 1,
+            "internalSku": "MW-SHR-1Y"
+          }
+        ]
+      },
+      "transactions": {
+        "transaction": [
+          {
+            "id": 70002,
+            "userid": 12346,
+            "currency": "INR",
+            "gateway": "razorpay",
+            "date": "2026-09-11 14:22:00",
+            "description": "Invoice Payment",
+            "amountin": "1416.00",
+            "fees": "28.32",
+            "transid": "pay_mock_amit_82001"
+          }
+        ]
+      }
+    },
+    {
+      "id": 82002,
+      "userid": 12346,
+      "invoicenum": "MW-2026-82002",
+      "status": "Unpaid",
+      "date": "2026-11-10",
+      "duedate": "2026-11-28",
+      "datepaid": "0000-00-00 00:00:00",
+      "subtotal": "799.00",
+      "credit": "0.00",
+      "tax": "143.82",
+      "tax2": "0.00",
+      "total": "942.82",
+      "balance": "942.82",
+      "currencycode": "INR",
+      "paymentmethod": "razorpay",
+      "notes": "Domain renewal awaiting payment",
+      "items": {
+        "item": [
+          {
+            "id": 920002,
+            "type": "DomainRegister",
+            "relid": 2003,
+            "description": "Domain Registration - amitportfolio.example",
+            "amount": "799.00",
+            "taxed": 1,
+            "internalSku": "DOM-REG-1Y"
+          }
+        ]
+      },
+      "transactions": ""
+    },
+    {
+      "id": 83001,
+      "userid": 12347,
+      "invoicenum": "MW-2026-83001",
+      "status": "Paid",
+      "date": "2026-07-01",
+      "duedate": "2026-07-15",
+      "datepaid": "2026-07-02 09:05:00",
+      "subtotal": "1500.00",
+      "credit": "0.00",
+      "tax": "270.00",
+      "tax2": "0.00",
+      "total": "1770.00",
+      "balance": "0.00",
+      "currencycode": "INR",
+      "paymentmethod": "razorpay",
+      "notes": "Billing-only workspace license",
+      "items": {
+        "item": [
+          {
+            "id": 930001,
+            "type": "Hosting",
+            "relid": 1006,
+            "description": "Google Workspace Starter - priyaconsult.example",
+            "amount": "1500.00",
+            "taxed": 1,
+            "internalSku": "MW-GWS-1Y"
+          }
+        ]
+      },
+      "transactions": {
+        "transaction": [
+          {
+            "id": 70003,
+            "userid": 12347,
+            "currency": "INR",
+            "gateway": "razorpay",
+            "date": "2026-07-02 09:05:00",
+            "description": "Invoice Payment",
+            "amountin": "1770.00",
+            "fees": "35.40",
+            "transid": "pay_mock_priya_83001"
+          }
+        ]
+      }
+    },
+    {
+      "id": 83002,
+      "userid": 12347,
+      "invoicenum": "MW-2026-83002",
+      "status": "Overdue",
+      "date": "2026-10-12",
+      "duedate": "2026-10-26",
+      "datepaid": "0000-00-00 00:00:00",
+      "subtotal": "600.00",
+      "credit": "0.00",
+      "tax": "108.00",
+      "tax2": "0.00",
+      "total": "708.00",
+      "balance": "708.00",
+      "currencycode": "INR",
+      "paymentmethod": "upi",
+      "notes": "Priya overdue addon invoice",
+      "items": {
+        "item": [
+          {
+            "id": 930002,
+            "type": "Addon",
+            "relid": 1006,
+            "description": "Email Archiving Addon",
+            "amount": "600.00",
+            "taxed": 1,
+            "internalSku": "MW-ARC-1Y"
+          }
+        ]
+      },
+      "transactions": ""
+    },
+    {
+      "id": 84001,
+      "userid": 12348,
+      "invoicenum": "MW-2026-84001",
+      "status": "Paid",
+      "date": "2026-06-20",
+      "duedate": "2026-07-04",
+      "datepaid": "2026-06-21 11:10:00",
+      "subtotal": "3200.00",
+      "credit": "0.00",
+      "tax": "576.00",
+      "tax2": "0.00",
+      "total": "3776.00",
+      "balance": "0.00",
+      "currencycode": "INR",
+      "paymentmethod": "razorpay",
+      "notes": "Neha Business Hosting paid",
+      "items": {
+        "item": [
+          {
+            "id": 940001,
+            "type": "Hosting",
+            "relid": 1003,
+            "description": "Business Hosting - nehastore.example",
+            "amount": "3200.00",
+            "taxed": 1,
+            "internalSku": "MW-BIZ-1Y"
+          }
+        ]
+      },
+      "transactions": {
+        "transaction": [
+          {
+            "id": 70004,
+            "userid": 12348,
+            "currency": "INR",
+            "gateway": "razorpay",
+            "date": "2026-06-21 11:10:00",
+            "description": "Invoice Payment",
+            "amountin": "3776.00",
+            "fees": "75.52",
+            "transid": "pay_mock_neha_84001"
+          }
+        ]
+      }
+    },
+    {
+      "id": 84002,
+      "userid": 12348,
+      "invoicenum": "MW-2026-84002",
+      "status": "Unpaid",
+      "date": "2026-11-18",
+      "duedate": "2026-12-02",
+      "datepaid": "0000-00-00 00:00:00",
+      "subtotal": "1800.00",
+      "credit": "0.00",
+      "tax": "324.00",
+      "tax2": "0.00",
+      "total": "2124.00",
+      "balance": "2124.00",
+      "currencycode": "INR",
+      "paymentmethod": "razorpay",
+      "notes": "Upcoming WordPress Hosting renewal",
+      "items": {
+        "item": [
+          {
+            "id": 940002,
+            "type": "Hosting",
+            "relid": 1004,
+            "description": "WordPress Hosting - nehablog.example",
+            "amount": "1800.00",
+            "taxed": 1,
+            "internalSku": "MW-WP-1Y"
+          }
+        ]
+      },
+      "transactions": ""
+    },
+    {
+      "id": 84003,
+      "userid": 12348,
+      "invoicenum": "MW-2026-84003",
+      "status": "Overdue",
+      "date": "2026-09-25",
+      "duedate": "2026-10-09",
+      "datepaid": "0000-00-00 00:00:00",
+      "subtotal": "950.00",
+      "credit": "0.00",
+      "tax": "171.00",
+      "tax2": "0.00",
+      "total": "1121.00",
+      "balance": "1121.00",
+      "currencycode": "INR",
+      "paymentmethod": "upi",
+      "notes": "Expired domain late renewal",
+      "items": {
+        "item": [
+          {
+            "id": 940003,
+            "type": "DomainRegister",
+            "relid": 2006,
+            "description": "Domain Renewal - nehablog.example",
+            "amount": "950.00",
+            "taxed": 1,
+            "internalSku": "DOM-EX-1Y"
+          }
+        ]
+      },
+      "transactions": ""
+    }
+  ],
+  "products": [
+    {
+      "id": 1001,
+      "clientid": 12345,
+      "pid": 12,
+      "name": "Business Hosting",
+      "groupname": "Linux Shared & Business Hosting",
+      "domain": "rahulcloud.example",
+      "status": "Active",
+      "billingcycle": "Annually",
+      "nextduedate": "2027-12-31",
+      "recurringamount": "2832.00",
+      "regdate": "2025-12-31",
+      "username": "rahul_cp_user",
+      "password": "mock-cp-password-do-not-expose",
+      "dedicatedip": "198.51.100.42",
+      "assignedips": "198.51.100.42",
+      "serverhostname": "in-mock-01.milesweb.internal",
+      "notes": "Internal provisioning token: prov-tok-1001",
+      "customfields": {
+        "customfield": [
+          {
+            "id": 101,
+            "name": "Enhance Org ID",
+            "value": "org-rahul-001"
+          },
+          {
+            "id": 102,
+            "name": "Internal Provisioning Secret",
+            "value": "secret-prov-12345"
+          }
+        ]
+      }
+    },
+    {
+      "id": 1005,
+      "clientid": 12345,
+      "pid": 25,
+      "name": "Dedicated SSL & Mail Guard",
+      "groupname": "Security Addons",
+      "domain": "rahulcloud.example",
+      "status": "Active",
+      "billingcycle": "Annually",
+      "nextduedate": "2027-11-30",
+      "recurringamount": "1178.82",
+      "regdate": "2025-11-30",
+      "username": "rahul_ssl_svc",
+      "password": "mock-ssl-password-do-not-expose",
+      "dedicatedip": "198.51.100.43",
+      "assignedips": "198.51.100.43",
+      "serverhostname": "sec-mock-01.milesweb.internal",
+      "notes": "Internal SSL key ref",
+      "customfields": {
+        "customfield": [
+          {
+            "id": 103,
+            "name": "Internal Key ID",
+            "value": "ssl-internal-999"
+          }
+        ]
+      }
+    },
+    {
+      "id": 1002,
+      "clientid": 12346,
+      "pid": 10,
+      "name": "Shared Hosting",
+      "groupname": "Linux Shared & Business Hosting",
+      "domain": "amitworkspace.example",
+      "status": "Active",
+      "billingcycle": "Annually",
+      "nextduedate": "2027-09-15",
+      "recurringamount": "1416.00",
+      "regdate": "2025-09-15",
+      "username": "amit_cp_user",
+      "password": "mock-amit-password-do-not-expose",
+      "dedicatedip": "198.51.100.52",
+      "assignedips": "198.51.100.52",
+      "serverhostname": "in-mock-02.milesweb.internal",
+      "notes": "Internal note for Amit",
+      "customfields": {
+        "customfield": [
+          {
+            "id": 104,
+            "name": "Enhance Org ID",
+            "value": "org-amit-001"
+          }
+        ]
+      }
+    },
+    {
+      "id": 1006,
+      "clientid": 12347,
+      "pid": 31,
+      "name": "Google Workspace Starter",
+      "groupname": "Productivity & Email",
+      "domain": "priyaconsult.example",
+      "status": "Active",
+      "billingcycle": "Annually",
+      "nextduedate": "2027-07-01",
+      "recurringamount": "1770.00",
+      "regdate": "2025-07-01",
+      "username": "priya@priyaconsult.example",
+      "password": "mock-priya-password-do-not-expose",
+      "dedicatedip": "198.51.100.61",
+      "assignedips": "",
+      "serverhostname": "mail-gw.milesweb.internal",
+      "notes": "No Enhance panel attached",
+      "customfields": {
+        "customfield": [
+          {
+            "id": 105,
+            "name": "Admin PIN",
+            "value": "998877"
+          }
+        ]
+      }
+    },
+    {
+      "id": 1003,
+      "clientid": 12348,
+      "pid": 12,
+      "name": "Business Hosting",
+      "groupname": "Linux Shared & Business Hosting",
+      "domain": "nehastore.example",
+      "status": "Active",
+      "billingcycle": "Annually",
+      "nextduedate": "2027-03-20",
+      "recurringamount": "3776.00",
+      "regdate": "2025-03-20",
+      "username": "neha_store_cp",
+      "password": "mock-neha-password-1",
+      "dedicatedip": "198.51.100.71",
+      "assignedips": "198.51.100.71",
+      "serverhostname": "in-mock-03.milesweb.internal",
+      "notes": "Primary Neha service",
+      "customfields": {
+        "customfield": [
+          {
+            "id": 106,
+            "name": "Enhance Org ID",
+            "value": "org-neha-001"
+          }
+        ]
+      }
+    },
+    {
+      "id": 1004,
+      "clientid": 12348,
+      "pid": 14,
+      "name": "WordPress Hosting",
+      "groupname": "Managed WordPress",
+      "domain": "nehablog.example",
+      "status": "Suspended",
+      "billingcycle": "Annually",
+      "nextduedate": "2026-01-14",
+      "recurringamount": "2124.00",
+      "regdate": "2025-01-14",
+      "username": "neha_blog_cp",
+      "password": "mock-neha-password-2",
+      "dedicatedip": "198.51.100.72",
+      "assignedips": "198.51.100.72",
+      "serverhostname": "in-mock-03.milesweb.internal",
+      "notes": "Suspended due to overdue renewal",
+      "customfields": {
+        "customfield": [
+          {
+            "id": 107,
+            "name": "Suspension Reason",
+            "value": "Overdue invoice 84002"
+          }
+        ]
+      }
+    }
+  ],
+  "tickets": [
+    {
+      "id": 91001,
+      "tid": "MW-91001",
+      "userid": 12345,
+      "deptid": 2,
+      "deptname": "Technical Support",
+      "c": "rk8X2mQp",
+      "subject": "Slow TTFB on rahulcloud.example after plugin update",
+      "status": "Answered",
+      "priority": "High",
+      "date": "2026-11-21 09:10:00",
+      "lastreply": "2026-11-22 14:45:00",
+      "flag": 0,
+      "notes": "Customer requested PHP worker check",
+      "attachments": [
+        {
+          "filename": "php-slow-trace.log",
+          "index": 0,
+          "size": 4096
+        }
+      ],
+      "replies": {
+        "reply": [
+          {
+            "replyid": 500101,
+            "userid": 12345,
+            "contactid": 0,
+            "name": "Rahul Sharma",
+            "email": "rahul@example.com",
+            "date": "2026-11-21 09:10:00",
+            "message": "Hi team, after updating caching plugins my TTFB jumped to 1.8s. Attaching slow trace.",
+            "admin": false,
+            "note": false,
+            "attachments": [
+              {
+                "filename": "php-slow-trace.log",
+                "index": 0,
+                "size": 4096
+              }
+            ]
+          },
+          {
+            "replyid": 500102,
+            "userid": 0,
+            "contactid": 0,
+            "name": "Ananya Verma (L2 Support)",
+            "email": "",
+            "date": "2026-11-21 11:20:00",
+            "message": "INTERNAL STAFF NOTE: Checked node in-mock-01 (10.20.30.40). Temporary debug token internal-dbg-991 used for trace.",
+            "admin": true,
+            "note": true,
+            "attachments": []
+          },
+          {
+            "replyid": 500103,
+            "userid": 0,
+            "contactid": 0,
+            "name": "Ananya Verma (L2 Support)",
+            "email": "",
+            "date": "2026-11-21 11:35:00",
+            "message": "Hi Rahul, we enabled LiteSpeed object cache and cleared stale transients. Please test again.",
+            "admin": true,
+            "note": false,
+            "attachments": []
+          },
+          {
+            "replyid": 500104,
+            "userid": 12345,
+            "contactid": 0,
+            "name": "Rahul Sharma",
+            "email": "rahul@example.com",
+            "date": "2026-11-22 14:45:00",
+            "message": "Thanks! TTFB is now under 200ms. Leaving open for 24h monitoring.",
+            "admin": false,
+            "note": false,
+            "attachments": []
+          }
+        ]
+      }
+    },
+    {
+      "id": 91002,
+      "tid": "MW-91002",
+      "userid": 12345,
+      "deptid": 1,
+      "deptname": "Billing",
+      "c": "cl4P9zLm",
+      "subject": "GST invoice copy for September renewal",
+      "status": "Closed",
+      "priority": "Low",
+      "date": "2026-09-03 10:00:00",
+      "lastreply": "2026-09-03 12:15:00",
+      "flag": 0,
+      "notes": "Resolved cleanly",
+      "attachments": [],
+      "replies": {
+        "reply": [
+          {
+            "replyid": 500201,
+            "userid": 12345,
+            "contactid": 0,
+            "name": "Rahul Sharma",
+            "email": "rahul@example.com",
+            "date": "2026-09-03 10:00:00",
+            "message": "Please share GST invoice copy for MW-2026-81001.",
+            "admin": false,
+            "note": false,
+            "attachments": []
+          },
+          {
+            "replyid": 500202,
+            "userid": 0,
+            "contactid": 0,
+            "name": "Rohan Billing",
+            "email": "",
+            "date": "2026-09-03 12:15:00",
+            "message": "Your GST tax invoice is available for download in your billing portal.",
+            "admin": true,
+            "note": false,
+            "attachments": []
+          }
+        ]
+      }
+    },
+    {
+      "id": 91003,
+      "tid": "MW-91003",
+      "userid": 12345,
+      "deptid": 2,
+      "deptname": "Technical Support",
+      "c": "op7N3vYw",
+      "subject": "Configure DMARC record for rahulcloud.example",
+      "status": "Customer-Reply",
+      "priority": "Medium",
+      "date": "2026-11-24 16:00:00",
+      "lastreply": "2026-11-25 09:05:00",
+      "flag": 0,
+      "notes": "Awaiting DNS propagation verification",
+      "attachments": [],
+      "replies": {
+        "reply": [
+          {
+            "replyid": 500301,
+            "userid": 12345,
+            "contactid": 0,
+            "name": "Rahul Sharma",
+            "email": "rahul@example.com",
+            "date": "2026-11-24 16:00:00",
+            "message": "Can you verify if p=quarantine is recommended for our DMARC TXT record?",
+            "admin": false,
+            "note": false,
+            "attachments": []
+          },
+          {
+            "replyid": 500302,
+            "userid": 0,
+            "contactid": 0,
+            "name": "Support Engineer",
+            "email": "",
+            "date": "2026-11-24 17:30:00",
+            "message": "Start with p=none for 7 days to inspect aggregate reports, then move to p=quarantine.",
+            "admin": true,
+            "note": false,
+            "attachments": []
+          },
+          {
+            "replyid": 500303,
+            "userid": 12345,
+            "contactid": 0,
+            "name": "Rahul Sharma",
+            "email": "rahul@example.com",
+            "date": "2026-11-25 09:05:00",
+            "message": "Added p=none record, please confirm if it resolves.",
+            "admin": false,
+            "note": false,
+            "attachments": []
+          }
+        ]
+      }
+    },
+    {
+      "id": 92001,
+      "tid": "MW-92001",
+      "userid": 12346,
+      "deptid": 2,
+      "deptname": "Technical Support",
+      "c": "am2T5jKd",
+      "subject": "Enable SSH access for amitworkspace.example",
+      "status": "Open",
+      "priority": "Medium",
+      "date": "2026-11-23 13:20:00",
+      "lastreply": "2026-11-23 13:20:00",
+      "flag": 0,
+      "notes": "Amit SSH request",
+      "attachments": [],
+      "replies": {
+        "reply": [
+          {
+            "replyid": 500401,
+            "userid": 12346,
+            "contactid": 0,
+            "name": "Amit Patil",
+            "email": "amit@example.com",
+            "date": "2026-11-23 13:20:00",
+            "message": "Could you enable SSH access on my shared hosting plan?",
+            "admin": false,
+            "note": false,
+            "attachments": []
+          }
+        ]
+      }
+    },
+    {
+      "id": 93001,
+      "tid": "MW-93001",
+      "userid": 12347,
+      "deptid": 1,
+      "deptname": "Billing",
+      "c": "pr9Q6wBx",
+      "subject": "Update billing address on Google Workspace order",
+      "status": "Answered",
+      "priority": "Low",
+      "date": "2026-11-19 10:40:00",
+      "lastreply": "2026-11-19 15:10:00",
+      "flag": 0,
+      "notes": "Billing-only ticket for Priya",
+      "attachments": [],
+      "replies": {
+        "reply": [
+          {
+            "replyid": 500501,
+            "userid": 12347,
+            "contactid": 0,
+            "name": "Priya Joshi",
+            "email": "priya@example.com",
+            "date": "2026-11-19 10:40:00",
+            "message": "Please update our GSTIN and billing address for future invoices.",
+            "admin": false,
+            "note": false,
+            "attachments": []
+          },
+          {
+            "replyid": 500502,
+            "userid": 0,
+            "contactid": 0,
+            "name": "Billing Desk",
+            "email": "",
+            "date": "2026-11-19 15:10:00",
+            "message": "We have updated your billing profile.",
+            "admin": true,
+            "note": false,
+            "attachments": []
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "milesweb-mcp-dev-secret-change-me"
     jwt_algorithm: str = "HS256"
     jwt_expires_in_minutes: int = 1440
+    mock_whmcs_identifier: str = ""
+    mock_whmcs_secret: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

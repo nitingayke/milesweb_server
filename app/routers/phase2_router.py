@@ -3,11 +3,18 @@
 import hmac
 import re
 from collections.abc import Callable
+from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from app.config import Settings, get_settings
-from app.services.phase2_catalog import Phase2Catalog, catalog
+from app.services.phase2_catalog import (
+    CatalogBadRequest,
+    CatalogForbidden,
+    CatalogNotFound,
+    Phase2Catalog,
+    catalog,
+)
 from app.services.token_service import decode_access_token
 
 router = APIRouter(tags=["Phase 2 Enhance mock"])
@@ -61,19 +68,46 @@ def phase2_handler(operation: str) -> Callable:
         request: Request,
         client_id: int = Depends(authenticated_client),
         data: Phase2Catalog = Depends(get_catalog),
-    ) -> dict:
+    ) -> Any:
         customer = data.authorize(client_id, dict(request.path_params))
         if customer is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
-        return data.response(operation, customer, dict(request.query_params), dict(request.path_params))
+        try:
+            return data.response(operation, customer, dict(request.query_params), dict(request.path_params))
+        except CatalogForbidden as exc:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+        except CatalogBadRequest as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        except CatalogNotFound as exc:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
     handler.__name__ = operation
     handler.__doc__ = f"Mock read-only response for Enhance operation {operation}."
     return handler
 
 
-# Every GET operation in the Enhance customer-facing read API catalog. This
-# explicit allow-list prevents accidentally exposing unreviewed write methods.
+# 16 additional Enhance read-only GET operations (mail, DNS, diagnostics, clones, members).
+# Registered before OPERATIONS so static routes like /websites/clone take precedence over /websites/{website_id}.
+EXTRA_OPERATIONS = [
+    ("getWebsiteEmail", "/orgs/{org_id}/websites/{website_id}/emails/{email_address}"),
+    ("getWebsiteEmailClientConf", "/orgs/{org_id}/websites/{website_id}/emails/{email_address}/client-conf"),
+    ("getWebsiteEmailAutoresponder", "/orgs/{org_id}/websites/{website_id}/emails/{email_address}/autoresponder"),
+    ("getWebsiteDomainDnsQuery", "/orgs/{org_id}/websites/{website_id}/domains/{domain_id}/dns-query"),
+    ("getCloudflareNameServers", "/orgs/{org_id}/domains/{domain_id}/cloudflare/nameservers"),
+    ("getWebsiteServerDomains", "/orgs/{org_id}/websites/{website_id}/server_domains"),
+    ("getWebsiteGitDeploymentLog", "/orgs/{org_id}/websites/{website_id}/git/deploys/{deployment_id}"),
+    ("getWebsiteHtaccessRewrites", "/orgs/{org_id}/websites/{website_id}/htaccess"),
+    ("getWebsiteHtaccessIpsRule", "/orgs/{org_id}/websites/{website_id}/htaccess/ips"),
+    ("getScreenshotTimestamp", "/orgs/{org_id}/websites/{website_id}/domains/{domain_id}/screenshot/timestamp"),
+    ("getJoomlaInfo", "/orgs/{org_id}/websites/{website_id}/apps/{app_id}/joomla/info"),
+    ("getWebsiteClones", "/orgs/{org_id}/websites/clone"),
+    ("getWebsiteClone", "/orgs/{org_id}/websites/clone/{clone_id}"),
+    ("getWebsiteCloneLog", "/orgs/{org_id}/websites/clone/{clone_id}/log"),
+    ("getMembers", "/orgs/{org_id}/members"),
+    ("getMember", "/orgs/{org_id}/members/{member_id}"),
+]
+
+# Every GET operation in the original 42-route Phase 2 Enhance read API catalog.
 OPERATIONS = [
     ("getDomains", "/orgs/{org_id}/domains"),
     ("getDomainAuthNs", "/orgs/{org_id}/domains/{domain_id}/auth-ns"),
@@ -119,18 +153,33 @@ OPERATIONS = [
     ("getWordpressThemes", "/orgs/{org_id}/websites/{website_id}/apps/{app_id}/wordpress/themes"),
 ]
 
-for operation_name, operation_path in OPERATIONS:
+QUERY_PARAMS_BY_OPERATION: dict[str, list[dict[str, Any]]] = {
+    "getWebsiteDomainDnsQuery": [
+        {"name": "resolveDepth", "in": "query", "required": False, "schema": {"type": "string", "enum": ["short", "detailed", "queryAllTldNs"]}},
+    ],
+    "getMembers": [
+        {"name": "offset", "in": "query", "required": False, "schema": {"type": "integer"}},
+        {"name": "limit", "in": "query", "required": False, "schema": {"type": "integer"}},
+        {"name": "sortBy", "in": "query", "required": False, "schema": {"type": "string", "enum": ["status", "joinedAt"]}},
+        {"name": "sortOrder", "in": "query", "required": False, "schema": {"type": "string", "enum": ["asc", "desc"]}},
+        {"name": "role", "in": "query", "required": False, "schema": {"type": "string", "enum": ["Owner", "SuperAdmin", "Business", "SiteAccess", "Support", "Sysadmin"]}},
+        {"name": "siteAccess", "in": "query", "required": False, "schema": {"type": "string"}},
+    ],
+}
+
+for operation_name, operation_path in [*EXTRA_OPERATIONS, *OPERATIONS]:
     # Dynamic handlers read path values from Request.path_params, so declare
     # them explicitly for OpenAPI/Swagger even though they are not Python
     # function parameters.
-    path_parameters = [
+    parameters: list[dict[str, Any]] = [
         {"name": name, "in": "path", "required": True, "schema": {"type": "string"}}
         for name in re.findall(r"{([^}]+)}", operation_path)
     ]
+    parameters.extend(QUERY_PARAMS_BY_OPERATION.get(operation_name, []))
     router.add_api_route(
         operation_path,
         phase2_handler(operation_name),
         methods=["GET"],
         name=operation_name,
-        openapi_extra={"parameters": path_parameters} if path_parameters else None,
+        openapi_extra={"parameters": parameters} if parameters else None,
     )
