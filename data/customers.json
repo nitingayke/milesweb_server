@@ -61,7 +61,75 @@
         "server": "in-mock-01",
         "appId": "app-rahul-wp-001",
         "domainId": "domain-rahul-001",
-        "additionalDomainIds": ["domain-rahul-002"]
+        "additionalDomainIds": ["domain-rahul-002"],
+        "accessInfo": {
+          "ftp": {
+            "enabled": true,
+            "protocol": "ftps",
+            "host": "ftp.rahulcloud.example",
+            "port": 21,
+            "username": "rahul-site"
+          },
+          "ssh": {
+            "enabled": true,
+            "host": "ssh.rahulcloud.example",
+            "port": 22,
+            "username": "rahul-site",
+            "authentication": "public_key"
+          }
+        },
+        "gitDeployments": [
+          {
+            "id": "deploy-rahul-001",
+            "repositoryUrl": "https://git.example/rahul/cloud-site.git",
+            "branch": "main",
+            "status": "succeeded",
+            "completedAt": "2026-11-25T08:15:00Z"
+          }
+        ],
+        "phpInfo": {
+          "version": "8.3",
+          "memoryLimit": "256M",
+          "maxExecutionTime": 60,
+          "uploadMaxFilesize": "64M",
+          "postMaxSize": "80M",
+          "displayErrors": false,
+          "logErrors": true
+        },
+        "phpErrorLog": [
+          {
+            "timestamp": "2026-11-25T08:30:00Z",
+            "level": "warning",
+            "message": "Optional theme configuration is missing."
+          }
+        ],
+        "backups": [
+          {
+            "id": "backup-rahul-001",
+            "status": "completed",
+            "createdAt": "2026-11-25T02:00:00Z",
+            "completedAt": "2026-11-25T02:03:00Z",
+            "sizeBytes": 52428800
+          }
+        ],
+        "backupStatus": {
+          "status": "completed",
+          "backupId": "backup-rahul-001",
+          "completedAt": "2026-11-25T02:03:00Z"
+        },
+        "restoreStatus": {
+          "status": "completed",
+          "restoreId": "restore-rahul-001",
+          "backupId": "backup-rahul-001",
+          "completedAt": "2026-11-25T04:10:00Z"
+        },
+        "wordpressDetails": {
+          "appId": "app-rahul-wp-001",
+          "siteTitle": "Rahul Cloud Studio",
+          "siteUrl": "https://rahulcloud.example",
+          "version": "6.8.3",
+          "status": "active"
+        }
       }
     },
     {
@@ -76,7 +144,7 @@
           "domain": "amitworkspace.example",
           "hostingPlan": "Shared Hosting",
           "status": "Active",
-          "expiryDate": "2026-09-15"
+          "expiryDate": "2027-09-15"
         }
       ],
       "domains": [
@@ -85,7 +153,7 @@
           "domainName": "amitworkspace.example",
           "status": "Active",
           "registrationDate": "2025-09-15",
-          "expiryDate": "2026-09-15",
+          "expiryDate": "2027-09-15",
           "autoRenew": true
         },
         {
@@ -141,7 +209,45 @@
         "server": "in-mock-02",
         "appId": "app-amit-wp-001",
         "domainId": "domain-amit-001",
-        "additionalDomainIds": []
+        "additionalDomainIds": [],
+        "accessInfo": {
+          "ftp": {
+            "enabled": false
+          },
+          "ssh": {
+            "enabled": false
+          }
+        },
+        "gitDeployments": [],
+        "phpInfo": {
+          "version": "8.2",
+          "memoryLimit": "128M",
+          "maxExecutionTime": 30,
+          "uploadMaxFilesize": "32M",
+          "postMaxSize": "40M",
+          "displayErrors": false,
+          "logErrors": true
+        },
+        "phpErrorLog": [],
+        "backups": [],
+        "backupStatus": {
+          "status": "none",
+          "backupId": null,
+          "completedAt": null
+        },
+        "restoreStatus": {
+          "status": "none",
+          "restoreId": null,
+          "backupId": null,
+          "completedAt": null
+        },
+        "wordpressDetails": {
+          "appId": "app-amit-wp-001",
+          "siteTitle": "Amit Web Works",
+          "siteUrl": "https://amitworkspace.example",
+          "version": "6.8.3",
+          "status": "active"
+        }
       }
     },
     {
@@ -199,7 +305,7 @@
         {
           "domainId": 2006,
           "domainName": "nehablog.example",
-          "status": "Active",
+          "status": "Expired",
           "registrationDate": "2025-01-14",
           "expiryDate": "2026-01-14",
           "autoRenew": false
@@ -236,7 +342,7 @@
         "status": "active",
         "owner": "Neha Kulkarni",
         "ownerEmail": "neha@example.com",
-        "subscriptionsCount": 2,
+        "subscriptionsCount": 1,
         "websitesCount": 1,
         "createdAt": "2025-01-14T08:15:00Z"
       },
@@ -273,7 +379,7 @@
           "domainName": "karanconsulting.example",
           "status": "Active",
           "registrationDate": "2025-06-30",
-          "expiryDate": "2026-06-30",
+          "expiryDate": "2027-06-30",
           "autoRenew": true
         },
         {
