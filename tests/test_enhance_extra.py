@@ -46,8 +46,18 @@ def test_all_16_endpoints_missing_headers_returns_401(client, path):
     assert client.get(path, headers={"Authorization": "Bearer test-token-rahul"}).status_code == 401
 
 
-@pytest.mark.parametrize("path", ALL_16_RAHUL_PATHS)
-def test_all_16_endpoints_are_get_only(client, path):
+POST_SUPPORTED_IN_ENHANCE_SPEC = {
+    "/orgs/org-rahul-001/websites/site-rahul-001/emails/hello@rahulcloud.example/autoresponder",
+    "/orgs/org-rahul-001/websites/clone",
+    "/orgs/org-rahul-001/members",
+}
+
+
+@pytest.mark.parametrize(
+    "path",
+    [p for p in ALL_16_RAHUL_PATHS if p not in POST_SUPPORTED_IN_ENHANCE_SPEC],
+)
+def test_get_only_endpoints_reject_post(client, path):
     assert client.post(path, headers=headers("test-token-rahul")).status_code == 405
 
 

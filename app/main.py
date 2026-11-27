@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.openapi import install_openapi_security
-from app.routers import auth_router, customer_router, phase2_router, whmcs_router
+from app.routers import auth_router, customer_router, enhance_router, phase2_router, whmcs_router
 
 app = FastAPI(
     title="MilesWeb Enhance Mock Control Panel & OAuth 2.1 Server",
@@ -21,6 +21,7 @@ app.add_middleware(
 app.include_router(auth_router.router)
 app.include_router(customer_router.router)
 app.include_router(phase2_router.router)
+app.include_router(enhance_router.router)
 app.include_router(whmcs_router.router)
 install_openapi_security(app)
 

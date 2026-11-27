@@ -26,9 +26,20 @@ VALID_MEMBER_ROLES = {"Owner", "SuperAdmin", "Business", "SiteAccess", "Support"
 VALID_RESOLVE_DEPTHS = {"short", "detailed", "queryAllTldNs"}
 
 
+DEFAULT_CUSTOMERS_PATH = Path(__file__).resolve().parents[2] / "data" / "customers.json"
+
+
 class Phase2Catalog:
     def __init__(self, path: Path | None = None) -> None:
-        self.path = path or Path(__file__).resolve().parents[2] / "data" / "customers.json"
+        self.path = path or DEFAULT_CUSTOMERS_PATH
+
+    def _state(self):
+        if self.path != DEFAULT_CUSTOMERS_PATH:
+            return None
+        from app.services.enhance_state import enhance_state
+
+        enhance_state._ensure_seeded()
+        return enhance_state
 
     def _customers(self) -> list[dict[str, Any]]:
         with self.path.open(encoding="utf-8") as source:
@@ -85,6 +96,9 @@ class Phase2Catalog:
 
     def _org_members(self, org_id: str, customer: dict[str, Any]) -> list[dict[str, Any]]:
         """Return members of the organization, synthesizing the owner if not explicitly listed."""
+        state = self._state()
+        if state and org_id in state._members:
+            return list(state._members[org_id])
         org = self._org_record(org_id, customer.get("organization"))
         if org and org.get("members"):
             return list(org["members"])
@@ -161,21 +175,30 @@ class Phase2Catalog:
         org = customer.get("organization")
         website = customer.get("website")
         subscription = customer.get("subscription")
+        state = self._state()
 
         if "org_id" in path:
             if not org or path["org_id"] != org.get("id"):
                 return None
         if "website_id" in path:
-            if not website or path["website_id"] != website.get("id"):
+            wid = path["website_id"]
+            if state and org and wid in state._org_websites.get(org["id"], []):
+                website = state._websites.get(wid, website)
+            elif not website or wid != website.get("id"):
                 return None
         if "subscription_id" in path:
-            if not subscription or str(path["subscription_id"]) != str(subscription.get("id")):
+            sid = str(path["subscription_id"])
+            if state and org and sid in state._org_subscriptions.get(org["id"], []):
+                subscription = state._subscriptions.get(sid, subscription)
+            elif not subscription or sid != str(subscription.get("id")):
                 return None
         if "app_id" in path:
             if not website or self._find_app(website, path["app_id"]) is None:
                 return None
         if "domain_id" in path:
             allowed = self._allowed_domain_ids(customer)
+            if state and org:
+                allowed |= set(state._org_domains.get(org["id"], []))
             if not allowed or path["domain_id"] not in allowed:
                 return None
         if "email_address" in path:
@@ -190,7 +213,7 @@ class Phase2Catalog:
         if "clone_id" in path:
             if not org:
                 return None
-            clones = org.get("websiteClones", [])
+            clones = state._clones.get(org["id"], []) if state else org.get("websiteClones", [])
             if not any(c.get("id") == path["clone_id"] for c in clones):
                 return None
 
@@ -213,9 +236,21 @@ class Phase2Catalog:
             "authMethod": "basic",
             "locale": "en-IN",
         }
+        state = self._state()
         org = customer.get("organization")
         subscription = customer.get("subscription")
         website = customer.get("website")
+        if state and org:
+            if "website_id" in path and path["website_id"] in state._websites:
+                website = state._websites[path["website_id"]]
+            elif website and website.get("id") in state._websites:
+                website = state._websites[website["id"]]
+            elif state._org_websites.get(org["id"]):
+                website = state._websites.get(state._org_websites[org["id"]][0], website)
+            if "subscription_id" in path and str(path["subscription_id"]) in state._subscriptions:
+                subscription = state._subscriptions[str(path["subscription_id"])]
+            elif subscription and str(subscription.get("id")) in state._subscriptions:
+                subscription = state._subscriptions[str(subscription["id"])]
 
         # Identity operations (work for all users, with or without hosting)
         if operation == "getLogin":
@@ -263,19 +298,19 @@ class Phase2Catalog:
             return self._member_response(customer, org, login, path["member_id"])
 
         if operation == "getWebsiteClones":
-            clones = (org or {}).get("websiteClones", [])
+            clones = state._clones.get(org["id"], []) if (state and org) else (org or {}).get("websiteClones", [])
             items = [{k: v for k, v in clone.items() if k != "log"} for clone in clones]
             return {"total": len(items), "items": items}
 
         if operation == "getWebsiteClone":
-            clones = (org or {}).get("websiteClones", [])
+            clones = state._clones.get(org["id"], []) if (state and org) else (org or {}).get("websiteClones", [])
             clone = next((c for c in clones if c.get("id") == path.get("clone_id")), None)
             if clone is None:
                 raise CatalogNotFound("Clone job not found")
             return {k: v for k, v in clone.items() if k != "log"}
 
         if operation == "getWebsiteCloneLog":
-            clones = (org or {}).get("websiteClones", [])
+            clones = state._clones.get(org["id"], []) if (state and org) else (org or {}).get("websiteClones", [])
             clone = next((c for c in clones if c.get("id") == path.get("clone_id")), None)
             if clone is None:
                 raise CatalogNotFound("Clone job not found")
@@ -309,6 +344,9 @@ class Phase2Catalog:
             }
 
         if operation == "getSubscriptionsToParent":
+            if state and org and org["id"] in state._org_subscriptions:
+                subs = [state._subscriptions[sid] for sid in state._org_subscriptions[org["id"]] if sid in state._subscriptions]
+                return {"total": len(subs), "items": subs}
             if subscription:
                 return {"total": 1, "items": [subscription]}
             return {"total": 0, "items": []}
@@ -342,6 +380,20 @@ class Phase2Catalog:
             }
 
         if operation == "getWebsites":
+            if state and org and org["id"] in state._org_websites:
+                site_items = [
+                    {
+                        "id": state._websites[wid]["id"],
+                        "orgId": org["id"],
+                        "subscriptionId": state._websites[wid].get("subscriptionId", subscription["id"] if subscription else 0),
+                        "domain": state._websites[wid]["domain"],
+                        "status": state._websites[wid]["status"],
+                        "server": state._websites[wid]["server"],
+                    }
+                    for wid in state._org_websites[org["id"]]
+                    if wid in state._websites
+                ]
+                return {"total": len(site_items), "items": site_items}
             if website and org and subscription:
                 website_item = {
                     "id": website["id"],
@@ -487,6 +539,7 @@ class Phase2Catalog:
         query: dict[str, str],
         path: dict[str, str],
     ) -> Any:
+        state = self._state()
         website_item = {
             "id": website["id"],
             "orgId": org["id"] if org else "",
@@ -534,9 +587,10 @@ class Phase2Catalog:
         if operation == "getWebsiteDomainMappingDnsStatus":
             return {"status": "Connected", "lastCheckedAt": "2026-11-23T07:30:00Z"}
         if operation == "getWebsiteDomainDnsZone":
-            return {
-                "domain": website["domain"],
-                "records": [
+            dom_id = path.get("domain_id", website["domainId"])
+            records = state._dns_zones.get(dom_id) if state else None
+            if records is None:
+                records = [
                     {
                         "id": "dns-001",
                         "kind": "A",
@@ -545,7 +599,10 @@ class Phase2Catalog:
                         "ttl": 3600,
                         "proxy": False,
                     }
-                ],
+                ]
+            return {
+                "domain": website["domain"],
+                "records": records,
             }
         if operation == "getWebsiteDomainDnsQuery":
             return self._dns_query_response(customer, website, path["domain_id"], query)
@@ -611,8 +668,18 @@ class Phase2Catalog:
                 raise CatalogBadRequest("App is not a Joomla installation")
             return app.get("joomlaInfo", {})
         if operation == "getWebsiteBackups":
-            return {"total": 1, "items": [{"id": 9001, "createdAt": "2026-11-20T01:00:00Z", "size": 10485760, "status": "completed"}]}
+            items = state._backups.get(website["id"]) if state else None
+            if items is None:
+                items = [{"id": 9001, "createdAt": "2026-11-20T01:00:00Z", "size": 10485760, "status": "completed"}]
+            return {"total": len(items), "items": items}
         if operation == "getWebsiteBackup":
+            items = state._backups.get(website["id"]) if state else None
+            if items is not None:
+                b_id = path.get("backup_id")
+                match = next((b for b in items if str(b.get("id")) == str(b_id)), None)
+                if match is None:
+                    raise CatalogNotFound("Backup not found")
+                return match
             return {"id": 9001, "createdAt": "2026-11-20T01:00:00Z", "size": 10485760, "status": "completed"}
         if operation == "getWebsiteBackupStatus":
             backup_status = website.get("backupStatus") or {}
@@ -715,67 +782,35 @@ class Phase2Catalog:
                 raise CatalogNotFound("Mailbox not found")
             return mailbox.get("autoresponder", {"enabled": False, "startDate": None, "endDate": None})
         if operation == "getFtpUsers":
-            return {"items": [{"account": "siteuser", "homeDir": f"/home/siteuser/{website['domain']}"}]}
+            items = state._ftp_users.get(website["id"]) if state else None
+            if items is None:
+                items = [{"account": "siteuser", "homeDir": f"/home/siteuser/{website['domain']}"}]
+            return {"items": items}
         if operation == "getWebsiteMySQLDBs":
-            return {
-                "total": 1,
-                "items": [
-                    {
-                        "name": "site_db",
-                        "size": 12582912,
-                        "createdAt": "2025-04-01T10:00:00Z",
-                        "userCount": 1,
-                    }
-                ],
-            }
+            items = state._mysql_dbs.get(website["id"]) if state else None
+            if items is None:
+                items = [{"name": "site_db", "size": 12582912, "createdAt": "2025-04-01T10:00:00Z", "userCount": 1}]
+            return {"total": len(items), "items": items}
         if operation == "getWebsiteMySQLUsers":
-            return {
-                "total": 1,
-                "items": [
-                    {
-                        "name": "site_user",
-                        "username": "site_user",
-                        "host": "localhost",
-                        "accessHosts": ["localhost", "127.0.0.1"],
-                        "createdAt": "2025-04-01T10:05:00Z",
-                    }
-                ],
-            }
+            items = state._mysql_users.get(website["id"]) if state else None
+            if items is None:
+                items = [{"name": "site_user", "username": "site_user", "host": "localhost", "accessHosts": ["localhost", "127.0.0.1"], "createdAt": "2025-04-01T10:05:00Z"}]
+            return {"total": len(items), "items": items}
         if operation == "getWebsitePostgresqlDbs":
-            return {
-                "total": 1,
-                "items": [
-                    {
-                        "name": "site_postgres",
-                        "size": 0,
-                        "createdAt": "2025-04-01T10:00:00Z",
-                        "userCount": 1,
-                    }
-                ],
-            }
+            items = state._pg_dbs.get(website["id"]) if state else None
+            if items is None:
+                items = [{"name": "site_postgres", "size": 0, "createdAt": "2025-04-01T10:00:00Z", "userCount": 1}]
+            return {"total": len(items), "items": items}
         if operation == "getWebsitePostgresqlUsers":
-            return {
-                "total": 1,
-                "items": [
-                    {
-                        "name": "site_pg_user",
-                        "username": "site_pg_user",
-                        "accessHosts": ["localhost"],
-                        "createdAt": "2025-04-01T10:05:00Z",
-                    }
-                ],
-            }
+            items = state._pg_users.get(website["id"]) if state else None
+            if items is None:
+                items = [{"name": "site_pg_user", "username": "site_pg_user", "accessHosts": ["localhost"], "createdAt": "2025-04-01T10:05:00Z"}]
+            return {"total": len(items), "items": items}
         if operation == "getWebsiteSshKeys":
-            return {
-                "items": [
-                    {
-                        "id": "ssh-001",
-                        "name": "deployment-key",
-                        "fingerprint": "SHA256:mockfingerprint",
-                        "createdAt": "2025-06-15T12:00:00Z",
-                    }
-                ]
-            }
+            items = state._ssh_keys.get(website["id"]) if state else None
+            if items is None:
+                items = [{"id": "ssh-001", "name": "deployment-key", "fingerprint": "SHA256:mockfingerprint", "createdAt": "2025-06-15T12:00:00Z"}]
+            return {"items": items}
         if operation == "getWebsiteGitInfo":
             return {"repository": "https://git.example/mock/site.git", "branch": "main", "connected": True}
         if operation == "getWebsiteGitDeploys":

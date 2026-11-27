@@ -14,8 +14,12 @@ from app.main import app
 
 @pytest.fixture(autouse=True)
 def clear_settings_cache():
+    from app.services.enhance_state import enhance_state
+
     get_settings.cache_clear()
+    enhance_state.reset()
     yield
+    enhance_state.reset()
     get_settings.cache_clear()
 
 

@@ -36,22 +36,27 @@ app/
   routers/
     auth_router.py           /auth login and token verification endpoints
     customer_router.py       /api/v1/connector/customer endpoints
+    enhance_router.py        440 remaining Enhance mock operations (GET/POST/PUT/PATCH/DELETE)
     phase2_router.py         58 Enhance mock GET operations (42 base + 16 extra)
     whmcs_router.py          POST /includes/api.php WHMCS mock endpoint
   services/
+    enhance_spec.py          OpenAPI spec loader, validator & schema synthesizer
+    enhance_state.py         in-memory stateful CRUD, async jobs & role/tenant isolation
     phase2_catalog.py        Enhance mock data provider + tenant/role isolation
     token_service.py         JWT creation and verification (HS256, PBKDF2)
     whmcs_service.py         WHMCS mock billing & support data provider
 data/
   customers.json             users, hosting, and Enhance fixture data
   whmcs.json                 WHMCS clients, invoices, products, and tickets
+enhance-api-reference-updated.json  Enhance v12.26.3 OpenAPI reference (500 operations)
 tests/
-  conftest.py                shared fixtures and test client setup
+  conftest.py                shared fixtures, state reset, and test client setup
   test_auth.py               authentication, JWT, login tests
   test_customer_connector.py connector API and tenant isolation tests
   test_phase2_catalog.py     Phase 2 operations and authorization tests
   test_new_batch_endpoints.py 7 batch Enhance operations tests
   test_enhance_extra.py      16 additional Enhance GET operations & role tests
+  test_enhance_full_coverage.py 440 Enhance ops, CRUD flows, 401/403/404/422 tests
   test_whmcs.py              WHMCS mock API & fixture integrity tests
   test_audit_gaps.py         edge-case and regression tests
 requirements.txt
@@ -260,6 +265,33 @@ These 16 endpoints follow the same `X-Connector-Key` + `Authorization: Bearer <t
 
 ---
 
+### 4b. Full Enhance API Mock Coverage (440 Additional Operations)
+
+`enhance_router.py` + `enhance_state.py` + `enhance_spec.py` register the remaining **440** Enhance operations from [enhance-api-reference-updated.json](enhance-api-reference-updated.json) (`152 GET`, `97 POST`, `84 PUT`, `76 DELETE`, `31 PATCH`), bringing total Enhance coverage to **498 / 500** spec operations (excluding `POST /auth/login` and `POST /mpanel/token`, which are intentionally omitted; `POST /auth/login` remains the mock JWT login endpoint).
+
+- **Stateful in-memory CRUD:** Writes (`POST` / `PUT` / `PATCH` / `DELETE`) on websites, domains, DNS zone records, mailboxes, autoresponders, MySQL/PostgreSQL DBs & users, FTP users, SSH keys, apps, backups/restores, website clones, git deploys, members, and subscriptions are reflected in subsequent `GET` reads without mutating `data/customers.json` on disk.
+- **Deterministic async jobs:** `POST /orgs/{org_id}/websites/clone` and `POST /orgs/{org_id}/websites/{website_id}/git` create deterministic `"queued"` job records with inspectable logs.
+- **Exact status codes & media types:** Returns `200`, `201`, `202`, empty `204`, `302`/`303` redirects (SSO/callback endpoints), raw JSON strings, `text/html` (`installComplete`), and `application/gzip` (`downloadWebsiteBackup`).
+- **Tenant & permission enforcement:** Foreign `org_id` / `website_id` / `domain_id` returns `404`; non-admin `SiteAccess` members (`vikram@example.com`) receive `403` on admin/org-write/server/settings/plan/member-write routes; invalid JSON returns `400`; missing required fields return `422`.
+
+```powershell
+# Create a website, then list websites to see it
+curl.exe -X POST "http://127.0.0.1:8000/orgs/org-rahul-001/websites" `
+  -H "X-Connector-Key: your-secret" `
+  -H "Authorization: Bearer mock-token-rahul" `
+  -H "Content-Type: application/json" `
+  -d '{"domain":"newsite.example","subscriptionId":5001}'
+
+# Add a DNS record (201), then read the DNS zone
+curl.exe -X POST "http://127.0.0.1:8000/orgs/org-rahul-001/websites/site-rahul-001/domains/domain-rahul-001/dns-zone/records" `
+  -H "X-Connector-Key: your-secret" `
+  -H "Authorization: Bearer mock-token-rahul" `
+  -H "Content-Type: application/json" `
+  -d '{"kind":"TXT","name":"_dmarc","value":"v=DMARC1; p=none","ttl":300}'
+```
+
+---
+
 ### 5. WHMCS Mock API (`POST /includes/api.php`)
 
 Simulates the WHMCS external API using `application/x-www-form-urlencoded` `POST` requests (other HTTP methods return `405`). Authenticates via form fields `username` and `password` against `MOCK_WHMCS_IDENTIFIER` and `MOCK_WHMCS_SECRET` (no connector key or Bearer header). Accepts `responsetype=json` and ignores `accesskey`. Wrong credentials return `{"result":"error","message":"Authentication Failed"}`.
@@ -290,7 +322,7 @@ Any other or missing `action` returns `{"result":"error","message":"Invalid or m
 | Tenant isolation | Every path parameter validated against the authenticated `clientId` |
 | Multi-domain ownership | Primary **and** additional domain IDs are all checked per website |
 | Connector response filtering | Only whitelisted fields returned — no raw dict leaks |
-| Write method blocking | All Phase 2 and connector routes are `GET`-only; other methods → `405` |
+| Write method blocking | Original Phase 2 & connector routes are `GET`-only unless a spec write method exists; unsupported methods → `405` |
 | CORS | `allow_origins=["*"]` — intentional for local dev; **lock this down before any production use** |
 
 ---
@@ -301,7 +333,7 @@ Any other or missing `action` returns `{"result":"error","message":"Invalid or m
 .\.venv\Scripts\python.exe -m pytest -v
 ```
 
-**207 tests** covering:
+**667 tests** covering:
 - Login with valid / invalid credentials (including non-admin member `vikram@example.com`)
 - Dynamic JWT creation, verification, and expiry
 - `/auth/me` and both `/auth/verify` variants
@@ -328,11 +360,12 @@ Any other or missing `action` returns `{"result":"error","message":"Invalid or m
 | `GET /health` | ✅ Complete |
 | Customer connector API (3 endpoints) | ✅ Complete |
 | All 58 Phase 2 Enhance mock operations (42 base + 16 extra) | ✅ Complete |
+| All 440 remaining Enhance operations (`enhance_router.py`, 498 / 500 spec total; auth endpoints excluded) | ✅ Complete |
 | WHMCS mock API (`POST /includes/api.php`, 6 actions) | ✅ Complete |
 | Tenant isolation & org role enforcement (`403` for non-admin members) | ✅ Complete |
 | Multi-domain ownership enforcement | ✅ Complete |
 | PBKDF2 password hashing | ✅ Complete |
-| 207 tests — all passing | ✅ Complete |
+| 667 tests — all passing | ✅ Complete |
 | OpenAPI docs at `/docs` | ✅ Complete |
 | Static test token fallback for local dev | ✅ Complete |
 
