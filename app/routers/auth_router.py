@@ -44,22 +44,45 @@ def get_repository() -> CustomerRepository:
     return repository
 
 
+ENABLED_ACCOUNT = {
+    "clientId": 123,
+    "name": "MilesWeb",
+    "email": "manish.kulkarni@milesweb.com",
+    "org_id": "3849700e-95b0-4656-be7b-0d1268598bb1",
+    "status": "Active",
+}
+
+
+def _is_enabled_jwt_claims(claims: dict[str, Any] | None) -> bool:
+    """Return True only when JWT claims match the single enabled login account."""
+    if not isinstance(claims, dict):
+        return False
+    email = str(claims.get("email") or "").strip().lower()
+    org_id = str(claims.get("org_id") or "").strip()
+    cid = str(claims.get("clientId") or claims.get("sub") or "").strip()
+    return (
+        email == ENABLED_ACCOUNT["email"]
+        and org_id == ENABLED_ACCOUNT["org_id"]
+        and cid == str(ENABLED_ACCOUNT["clientId"])
+    )
+
+
 class LoginRequest(BaseModel):
     email: str = Field(
         ...,
-        examples=["rahul@example.com"],
-        description="User email address (e.g. rahul@example.com, amit@example.com, neha@example.com)",
+        examples=["manish.kulkarni@milesweb.com"],
+        description="User email address (manish.kulkarni@milesweb.com)",
     )
     password: str = Field(
         ...,
-        examples=["password123"],
-        description="User account password (default: password123)",
+        description="Dummy account password configured via DUMMY_LOGIN_PASSWORD",
     )
 
 
 class LoginResponse(BaseModel):
     email: str
     clientId: str
+    org_id: str
     token: str
     name: str | None = None
     tokenType: str = "bearer"
@@ -76,30 +99,25 @@ class VerifyTokenResponse(BaseModel):
     valid: bool
     clientId: str
     email: str
+    org_id: str | None = None
     name: str | None = None
     claims: dict[str, Any]
 
 
 class UserProfileResponse(BaseModel):
-    clientId: int
+    clientId: int | str
     name: str
     email: str
+    org_id: str | None = None
     status: str
 
 
 @router.post("/login", response_model=LoginResponse)
 async def login(
     payload: LoginRequest,
-    customer_repo: CustomerRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
 ):
-    """
-    Authenticate user against dummy customer fixture data.
-
-    Checks whether the email exists in dummy data (`data/customers.json`).
-    If found and credentials match, generates and returns a dynamic signed
-    JWT access token with customer details and clientId.
-    """
+    """Authenticate the single configured dummy user (Manish Kulkarni / MilesWeb)."""
     email_clean = payload.email.strip()
     password_clean = payload.password.strip()
 
@@ -112,19 +130,17 @@ async def login(
             },
         )
 
-    customer = customer_repo.get_customer_by_email(email_clean)
-    if not customer:
+    if email_clean.lower() != ENABLED_ACCOUNT["email"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 "error": "user_not_found",
-                "message": f"User with email '{email_clean}' does not exist in dummy data",
+                "message": f"User with email '{email_clean}' is not authorized",
             },
         )
 
-    # Validate password against the stored PBKDF2 hash
-    stored_hash = customer.get("password_hash")
-    if not _verify_password(payload.password, stored_hash or ""):
+    expected_password = settings.dummy_login_password
+    if not expected_password or not hmac.compare_digest(payload.password, expected_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -133,45 +149,56 @@ async def login(
             },
         )
 
-    # Generate a dynamic signed JWT access token for this customer
     token = create_access_token(
         data={
-            "sub": str(customer["clientId"]),
-            "clientId": customer["clientId"],
-            "email": customer["email"],
-            "name": customer.get("name", ""),
+            "sub": str(ENABLED_ACCOUNT["clientId"]),
+            "clientId": str(ENABLED_ACCOUNT["clientId"]),
+            "email": ENABLED_ACCOUNT["email"],
+            "name": ENABLED_ACCOUNT["name"],
+            "org_id": ENABLED_ACCOUNT["org_id"],
         },
         settings=settings,
     )
 
     return LoginResponse(
-        email=customer["email"],
-        clientId=str(customer["clientId"]),
+        email=ENABLED_ACCOUNT["email"],
+        clientId=str(ENABLED_ACCOUNT["clientId"]),
+        org_id=ENABLED_ACCOUNT["org_id"],
         token=token,
-        name=customer.get("name"),
+        name=ENABLED_ACCOUNT["name"],
         tokenType="bearer",
     )
 
 
 @router.get("/me", response_model=UserProfileResponse)
 async def get_me(
-    client_id: int = Depends(get_current_client_id),
+    client_id: int | str = Depends(get_current_client_id),
     customer_repo: CustomerRepository = Depends(get_repository),
 ):
     """
     Dynamically identify and return the profile of the authenticated caller
     from their Bearer JWT token.
     """
+    if str(client_id) == str(ENABLED_ACCOUNT["clientId"]):
+        return UserProfileResponse(
+            clientId=ENABLED_ACCOUNT["clientId"],
+            name=ENABLED_ACCOUNT["name"],
+            email=ENABLED_ACCOUNT["email"],
+            org_id=ENABLED_ACCOUNT["org_id"],
+            status=ENABLED_ACCOUNT["status"],
+        )
     customer = customer_repo.get_customer(client_id)
     if not customer:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"error": "not_found", "message": "Customer record not found"},
         )
+    org = customer.get("organization") or {}
     return UserProfileResponse(
         clientId=customer["clientId"],
         name=customer["name"],
         email=customer["email"],
+        org_id=org.get("id"),
         status=customer["status"],
     )
 
@@ -197,14 +224,20 @@ async def verify_token_post(
     """
     token_clean = parse_token_input(payload.token)
     is_valid, claims, error_message = verify_access_token(token_clean, settings=settings)
-    if is_valid and claims:
+    if is_valid and _is_enabled_jwt_claims(claims):
         raw_id = claims.get("clientId") or claims.get("sub", "")
         return VerifyTokenResponse(
             valid=True,
             clientId=str(raw_id),
             email=claims.get("email", ""),
+            org_id=claims.get("org_id"),
             name=claims.get("name"),
             claims=claims,
+        )
+    if is_valid and claims:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": "invalid_token", "message": "Token subject is no longer authorized"},
         )
 
     # Development test tokens fallback (e.g. mock-token-rahul, mock-token-amit)
@@ -248,14 +281,20 @@ async def verify_token_get(
 
     token_clean = parse_token_input(bearer_token)
     is_valid, claims, error_message = verify_access_token(token_clean, settings=settings)
-    if is_valid and claims:
+    if is_valid and _is_enabled_jwt_claims(claims):
         raw_id = claims.get("clientId") or claims.get("sub", "")
         return VerifyTokenResponse(
             valid=True,
             clientId=str(raw_id),
             email=claims.get("email", ""),
+            org_id=claims.get("org_id"),
             name=claims.get("name"),
             claims=claims,
+        )
+    if is_valid and claims:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": "invalid_token", "message": "Token subject is no longer authorized"},
         )
 
     # Development test tokens fallback (e.g. mock-token-rahul, mock-token-amit)

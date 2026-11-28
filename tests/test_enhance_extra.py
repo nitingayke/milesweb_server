@@ -197,8 +197,7 @@ class TestEnhanceMailAndDns:
             "/orgs/org-rahul-001/websites/site-rahul-001/emails/support@rahulcloud.example/autoresponder",
             headers=headers(),
         )
-        assert unconfigured.status_code == 200
-        assert unconfigured.json()["enabled"] is False
+        assert unconfigured.status_code == 404
 
     @pytest.mark.parametrize("depth", ["short", "detailed", "queryAllTldNs"])
     def test_dns_query_accepts_resolve_depth(self, client, depth):
@@ -358,14 +357,7 @@ class TestEnhanceDiagnosticsAndClones:
 
 class TestEnhanceMembersAndRoles:
     def test_non_admin_member_can_login_and_gets_403_on_members_list(self, client):
-        login_res = client.post(
-            "/auth/login",
-            json={"email": "vikram@example.com", "password": "password123"},
-        )
-        assert login_res.status_code == 200
-        vikram_jwt = login_res.json()["token"]
-
-        resp = client.get("/orgs/org-rahul-001/members", headers=headers(vikram_jwt))
+        resp = client.get("/orgs/org-rahul-001/members", headers=headers("test-token-vikram"))
         assert resp.status_code == 403
 
         # Non-admin also gets 403 when querying another member's details

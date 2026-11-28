@@ -52,7 +52,7 @@ RAHUL_PATH_PARAMS = {
     "group_id": "grp-default",
     "session_id": "sess-001",
     "cloudflare_key": "cf-key-001",
-    "repo_owner": "rahul",
+    "repo_owner": "rahul-studio",
     "repo_name": "cloud-site",
     "token_id": "tok-001",
     "wp_option": "blogname",
@@ -105,6 +105,8 @@ def test_every_new_enhance_operation_responds_with_expected_status_and_type(clie
         url = url.replace("/site_user", "/siteuser")
     if "/joomla/" in op.path:
         url = url.replace("app-rahul-wp-001", "app-rahul-joomla-001")
+    if op.path == "/orgs/{org_id}/websites/{website_id}/domains/{domain_id}" and op.method == "DELETE":
+        url = url.replace("domain-rahul-001", "domain-rahul-002")
 
     raw_spec = load_raw_spec()
     req_kwargs: dict = {"headers": headers("test-token-rahul"), "follow_redirects": False}
@@ -115,6 +117,14 @@ def test_every_new_enhance_operation_responds_with_expected_status_and_type(clie
                 body.setdefault(req_field, "mock-value")
         if op.path == "/orgs/{org_id}/websites" and op.method == "DELETE":
             body = {"ids": ["site-rahul-001"]}
+        if op.path == "/orgs/{org_id}/websites/{website_id}/git" and op.method == "PUT":
+            body = {
+                "repoOwner": "rahul-studio",
+                "repoName": "cloud-site",
+                "branchOrTagName": "main",
+                "refKind": "branch",
+                "autoDeploy": False,
+            }
         req_kwargs["json"] = body
 
     resp = client.request(op.method, url, **req_kwargs)
@@ -283,7 +293,7 @@ class TestStatefulCrudAndAsyncFlows:
         assert client.get(f"{base}/billing@rahulcloud.example/autoresponder", headers=headers()).json()["enabled"] is True
 
         assert client.delete(f"{base}/billing@rahulcloud.example/autoresponder", headers=headers()).status_code == 204
-        assert client.get(f"{base}/billing@rahulcloud.example/autoresponder", headers=headers()).json()["enabled"] is False
+        assert client.get(f"{base}/billing@rahulcloud.example/autoresponder", headers=headers()).status_code == 404
 
         # Delete mailbox
         assert client.delete(f"{base}/billing@rahulcloud.example", headers=headers()).status_code == 204
@@ -330,12 +340,14 @@ class TestStatefulCrudAndAsyncFlows:
         clone_id = clone_resp.json()["id"]
 
         clone_detail = client.get(f"/orgs/org-rahul-001/websites/clone/{clone_id}", headers=headers()).json()
-        assert clone_detail["status"] == "queued"
+        assert clone_detail["status"] == "complete"
         clone_log = client.get(f"/orgs/org-rahul-001/websites/clone/{clone_id}/log", headers=headers()).json()
         assert len(clone_log) == 3
 
         clone_list = client.get("/orgs/org-rahul-001/websites/clone", headers=headers()).json()
         assert any(c["id"] == clone_id for c in clone_list["items"])
+        websites = client.get("/orgs/org-rahul-001/websites", headers=headers()).json()["items"]
+        assert any(w["id"] == clone_detail["destWebsiteId"] for w in websites)
         assert client.delete(f"/orgs/org-rahul-001/websites/clone/{clone_id}", headers=headers()).status_code == 405
 
         deploy_resp = client.post(
@@ -354,3 +366,253 @@ class TestStatefulCrudAndAsyncFlows:
             f"/orgs/org-rahul-001/websites/site-rahul-001/git/deploys/{new_deploy['id']}",
             headers=headers(),
         ).json()
+
+
+class TestTranscriptWorkflowRegressions:
+    def test_git_repos_refs_connect_readback_and_disconnect(self, client):
+        repos = client.get("/orgs/org-rahul-001/github/repos", headers=headers()).json()
+        assert len(repos) == 1
+        assert repos[0]["full_name"] == "rahul-studio/cloud-site"
+
+        refs = client.get("/orgs/org-rahul-001/github/repositories/rahul-studio/cloud-site/refs", headers=headers()).json()
+        assert "main" in refs["branches"]
+        assert "v1.0.0" in refs["tags"]
+
+        # New site starts disconnected
+        new_site = client.post(
+            "/orgs/org-rahul-001/websites",
+            headers=headers(),
+            json={"domain": "git-test.example", "subscriptionId": 5001},
+        ).json()["id"]
+        assert client.get(f"/orgs/org-rahul-001/websites/{new_site}/git", headers=headers()).json()["connected"] is False
+
+        # Connect -> read back -> disconnect
+        conn = client.put(
+            f"/orgs/org-rahul-001/websites/{new_site}/git",
+            headers=headers(),
+            json={
+                "repoOwner": "rahul-studio",
+                "repoName": "cloud-site",
+                "branchOrTagName": "v1.0.0",
+                "refKind": "tag",
+                "autoDeploy": False,
+            },
+        )
+        assert conn.status_code == 200
+        git_info = client.get(f"/orgs/org-rahul-001/websites/{new_site}/git", headers=headers()).json()
+        assert git_info["connected"] is True
+        assert git_info["branchOrTagName"] == "v1.0.0"
+
+        assert client.delete(f"/orgs/org-rahul-001/websites/{new_site}/git", headers=headers()).status_code == 200
+        assert client.get(f"/orgs/org-rahul-001/websites/{new_site}/git", headers=headers()).json()["connected"] is False
+
+    def test_domain_alias_create_list_detail_primary_switch_and_delete(self, client):
+        base = "/orgs/org-rahul-001/websites/site-rahul-001/domains"
+        alias_resp = client.post(base, headers=headers(), json={"domain": "alias-test.example", "kind": "alias"})
+        assert alias_resp.status_code == 201
+        alias_id = alias_resp.json()["id"]
+
+        listed = client.get(base, headers=headers()).json()["items"]
+        assert any(d["id"] == alias_id and d["domain"] == "alias-test.example" and d["mappingKind"] == "alias" for d in listed)
+
+        detail = client.get(f"{base}/{alias_id}", headers=headers()).json()
+        assert detail["domain"] == "alias-test.example"
+        assert detail["mappingKind"] == "alias"
+
+        # Primary cannot be deleted
+        assert client.delete(f"{base}/domain-rahul-001", headers=headers()).status_code == 400
+
+        # Delete alias -> gone, primary intact
+        assert client.delete(f"{base}/{alias_id}", headers=headers()).status_code == 204
+        listed_after = client.get(base, headers=headers()).json()["items"]
+        assert not any(d["id"] == alias_id for d in listed_after)
+        assert any(d["id"] == "domain-rahul-001" and d["mappingKind"] == "primary" for d in listed_after)
+
+    def test_website_reads_wp_node_preview_validate_and_backup_tree(self, client):
+        # WordPress app shape & v2 endpoints
+        apps = client.get("/orgs/org-rahul-001/websites/site-rahul-001/apps", headers=headers()).json()["items"]
+        wp = next(a for a in apps if a["id"] == "app-rahul-wp-001")
+        assert wp["app"] == "wordpress"
+        assert wp["type"] == "wordpress"
+
+        assert client.get("/v2/apps/app-rahul-wp-001/wordpress/url", headers=headers()).json() == "https://rahulcloud.example"
+        assert client.get("/v2/apps/app-rahul-wp-001/wordpress/maintenance-mode", headers=headers()).json() == "deactivated"
+        assert client.put("/v2/apps/app-rahul-wp-001/wordpress/maintenance-mode", headers=headers(), json="activate").status_code == 200
+        assert client.get("/v2/apps/app-rahul-wp-001/wordpress/maintenance-mode", headers=headers()).json() == "active"
+
+        # Node versions (seeded vs empty on new site)
+        assert client.get("/websites/site-rahul-001/apps/node/versions", headers=headers()).json() == ["20.18.0", "22.11.0"]
+        new_site = client.post(
+            "/orgs/org-rahul-001/websites",
+            headers=headers(),
+            json={"domain": "node-empty.example", "subscriptionId": 5001},
+        ).json()["id"]
+        assert client.get(f"/websites/{new_site}/apps/node/versions", headers=headers()).json() == []
+
+        # Preview domain is realistic (not "string")
+        preview = client.post(f"/orgs/org-rahul-001/websites/{new_site}/preview", headers=headers())
+        assert preview.status_code == 201
+        assert preview.json().endswith(".preview.milesweb.example")
+
+        # validateWebsiteOperation accepts 'params'
+        val = client.post(
+            f"/orgs/org-rahul-001/websites/{new_site}/validate-operation",
+            headers=headers(),
+            json={"operation": "changeSubscription", "params": {"subscriptionId": 5001}},
+        )
+        assert val.status_code == 200
+        assert val.json()["result"] is True
+
+        # Backup directory tree is internally consistent
+        tree = client.get("/orgs/org-rahul-001/websites/site-rahul-001/backups/9001/directory_tree", headers=headers()).json()
+        root_node = next(n for n in tree if n["rel_path"] == "public_html")
+        assert root_node["node_type"] == "directory"
+        file_node = next(n for n in tree if n["rel_path"] == "public_html/wordpress/index.php")
+        assert file_node["node_type"] == "file"
+        assert file_node["size"] == 405
+        assert file_node["permissions"] == "0644"
+
+    def test_ssl_per_domain_and_backup_restore_and_profile_persistence(self, client):
+        # domain-rahul-001 has cert, domain-rahul-002 has none until issued
+        c1 = client.get("/v2/domains/domain-rahul-001/ssl", headers=headers())
+        assert c1.status_code == 200
+        assert c1.json()["cn"] == "rahulcloud.example"
+
+        assert client.get("/v2/domains/domain-rahul-002/ssl", headers=headers()).status_code == 404
+        assert client.post("/v2/domains/domain-rahul-002/letsencrypt", headers=headers()).status_code == 201
+        c2 = client.get("/v2/domains/domain-rahul-002/ssl", headers=headers()).json()
+        assert c2["cn"] == "extra.rahulcloud.example"
+        assert c2["forceHttps"] is False
+
+        assert client.put("/v2/domains/domain-rahul-002/ssl/force_ssl", headers=headers(), json=True).status_code == 200
+        assert client.get("/v2/domains/domain-rahul-002/ssl", headers=headers()).json()["forceHttps"] is True
+
+        # Backup excluding emails -> restore excluding emails -> emailsStatus != successful
+        bak = client.post(
+            "/orgs/org-rahul-001/websites/site-rahul-001/backups?includeEmails=false",
+            headers=headers(),
+        ).json()
+        assert bak["emailsStatus"] == "skipped"
+        assert client.get("/orgs/org-rahul-001/websites/site-rahul-001/status/backup", headers=headers()).json()["id"] == bak["id"]
+
+        assert client.put(
+            f"/orgs/org-rahul-001/websites/site-rahul-001/backups/{bak['id']}",
+            headers=headers(),
+            json={"restoreFiles": True, "restoreDatabases": [], "restoreEmails": []},
+        ).status_code == 200
+        rst = client.get(
+            f"/orgs/org-rahul-001/websites/site-rahul-001/backups/{bak['id']}/restore_status",
+            headers=headers(),
+        ).json()
+        assert rst["homeDirStatus"] == "successful"
+        assert rst["emailsStatus"] == "skipped"
+
+        # Profile update persists on /login and /members
+        upd = client.patch("/login", headers=headers(), json={"name": "Rahul Updated"})
+        assert upd.status_code == 200
+        assert upd.json()["verifyPin"] is False
+        assert client.get("/login", headers=headers()).json()["name"] == "Rahul Updated"
+        members = client.get("/orgs/org-rahul-001/members", headers=headers()).json()["items"]
+        assert any(m["id"] == "login-rahul-001" and m["name"] == "Rahul Updated" for m in members)
+
+
+class TestNehaEndToEndWorkflows:
+    def test_neha_fixtures_subs_sites_wp_node_github_and_backups(self, client):
+        h = headers("test-token-neha")
+
+        # 2 subscriptions (5003, 5004) & 2 websites (site-neha-001 suspended, site-neha-002 active)
+        subs = client.get("/orgs/org-neha-001/subscriptions", headers=h).json()["items"]
+        assert {s["id"] for s in subs} == {5003, 5004}
+
+        sites = client.get("/orgs/org-neha-001/websites", headers=h).json()["items"]
+        assert {s["id"]: s["status"] for s in sites} == {
+            "site-neha-001": "suspended",
+            "site-neha-002": "active",
+        }
+
+        # WordPress consistency on site-neha-001 & site-neha-002
+        for sid, aid, expected_url in [
+            ("site-neha-001", "app-neha-wp-001", "https://nehastore.example"),
+            ("site-neha-002", "app-neha-wp-002", "https://neha-mcp-disposable.example"),
+        ]:
+            apps = client.get(f"/orgs/org-neha-001/websites/{sid}/apps", headers=h).json()["items"]
+            wp = next(a for a in apps if a["id"] == aid)
+            assert wp["kind"] == "wordpress" and wp["app"] == "wordpress" and wp["type"] == "wordpress"
+            assert client.get(f"/v2/apps/{aid}/wordpress/url", headers=h).json() == expected_url
+            assert client.get(f"/v2/apps/{aid}/wordpress/maintenance-mode", headers=h).json() == "deactivated"
+
+        # Toggle maintenance mode on disposable site-neha-002
+        assert client.put("/v2/apps/app-neha-wp-002/wordpress/maintenance-mode", headers=h, json="activate").status_code == 200
+        assert client.get("/v2/apps/app-neha-wp-002/wordpress/maintenance-mode", headers=h).json() == "active"
+
+        # Node versions: populated on site-neha-001, explicit empty on site-neha-002
+        assert client.get("/websites/site-neha-001/apps/node/versions", headers=h).json() == ["18.20.4", "20.18.0"]
+        assert client.get("/websites/site-neha-002/apps/node/versions", headers=h).json() == []
+
+        # GitHub repo & refs for org-neha-001
+        repos = client.get("/orgs/org-neha-001/github/repos", headers=h).json()
+        assert len(repos) == 1
+        assert repos[0]["full_name"] == "neha-demo/bakery-site"
+        assert repos[0]["private"] is False
+        refs = client.get("/orgs/org-neha-001/github/repositories/neha-demo/bakery-site/refs", headers=h).json()
+        assert refs == {"branches": ["main", "staging"], "tags": ["v1.0.0"]}
+
+        # Backup tree on site-neha-001 backup 9001
+        tree = client.get("/orgs/org-neha-001/websites/site-neha-001/backups/9001/directory_tree", headers=h).json()
+        assert tree[0]["name"] == "public_html" and tree[0]["node_type"] == "directory"
+        assert tree[2]["rel_path"] == "public_html/wordpress/index.php" and tree[2]["node_type"] == "file"
+
+    def test_neha_disposable_site_git_domains_ssl_mail_backup_clone_and_profile(self, client):
+        h = headers("test-token-neha")
+
+        # Git disconnected -> connect -> deploy -> disconnect
+        assert client.get("/orgs/org-neha-001/websites/site-neha-002/git", headers=h).json()["connected"] is False
+        assert client.put(
+            "/orgs/org-neha-001/websites/site-neha-002/git",
+            headers=h,
+            json={"repoOwner": "neha-demo", "repoName": "bakery-site", "branchOrTagName": "main", "refKind": "branch", "autoDeploy": False},
+        ).status_code == 200
+        assert client.post("/orgs/org-neha-001/websites/site-neha-002/git", headers=h, json={}).status_code == 200
+        deploys = client.get("/orgs/org-neha-001/websites/site-neha-002/git/deploys", headers=h).json()["items"]
+        assert len(deploys) == 1
+        deploy_id = deploys[0]["id"]
+        assert deploy_id in client.get(f"/orgs/org-neha-001/websites/site-neha-002/git/deploys/{deploy_id}", headers=h).json()
+
+        # validateWebsiteOperation changeSubscription to 5004
+        val = client.post(
+            "/orgs/org-neha-001/websites/site-neha-002/validate-operation",
+            headers=h,
+            json={"operation": "changeSubscription", "params": {"subscriptionId": 5004}},
+        )
+        assert val.status_code == 200 and val.json()["result"] is True
+
+        # Preview domain
+        prev = client.post("/orgs/org-neha-001/websites/site-neha-002/preview", headers=h)
+        assert prev.status_code == 201 and prev.json() == "site-neha-002.preview.milesweb.example"
+
+        # SSL: store site has cert, disposable site has NO cert (cannot inherit store cert) until issued
+        assert client.get("/v2/domains/domain-neha-001/ssl", headers=h).json()["cn"] == "nehastore.example"
+        assert client.get("/v2/domains/domain-neha-002/ssl", headers=h).status_code == 404
+        assert client.post("/v2/domains/domain-neha-002/letsencrypt", headers=h).status_code == 201
+        cert2 = client.get("/v2/domains/domain-neha-002/ssl", headers=h).json()
+        assert cert2["cn"] == "neha-mcp-disposable.example" and cert2["forceHttps"] is False
+        assert client.put("/v2/domains/domain-neha-002/ssl/force_ssl", headers=h, json=True).status_code == 200
+        assert client.get("/v2/domains/domain-neha-002/ssl", headers=h).json()["forceHttps"] is True
+
+        # Mailbox: no autoresponder (404), nonzero spam thresholds preserved on partial update
+        assert client.get("/orgs/org-neha-001/websites/site-neha-002/emails/test@neha-mcp-disposable.example/autoresponder", headers=h).status_code == 404
+        assert client.get("/websites/site-neha-002/emails/test@neha-mcp-disposable.example/spam_thresholds", headers=h).json() == {
+            "reject": 10, "spambox": 5, "greylist": 3
+        }
+        assert client.put("/websites/site-neha-002/emails/test@neha-mcp-disposable.example/spam_thresholds", headers=h, json={"reject": 10, "spambox": 7}).status_code == 200
+        assert client.get("/websites/site-neha-002/emails/test@neha-mcp-disposable.example/spam_thresholds", headers=h).json() == {
+            "reject": 10, "spambox": 7, "greylist": 3
+        }
+
+        # Rewrite rule has synthetic credential-like token
+        rewrites = client.get("/orgs/org-neha-001/websites/site-neha-002/htaccess", headers=h).json()["items"]
+        assert "token=EXAMPLE_FAKE_SECRET" in rewrites[0]["rule"]["substitution"]
+
+        # Profile update persists on /login and /members
+        assert client.patch("/login", headers=h, json={"name": "Neha Kulkarni (MCP Test)"}).json()["verifyPin"] is False
+        assert client.get("/login", headers=h).json()["name"] == "Neha Kulkarni (MCP Test)"

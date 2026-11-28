@@ -52,7 +52,13 @@ async def _parse_and_validate_body(op: EnhanceOpSpec, request: Request) -> Any:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON request body") from exc
 
     if op.required_body_fields and isinstance(body, dict):
-        missing = [f for f in op.required_body_fields if f not in body]
+        if op.operation_id == "validateWebsiteOperation":
+            missing = [
+                f for f in op.required_body_fields
+                if f not in body and not (f == "parameters" and "params" in body)
+            ]
+        else:
+            missing = [f for f in op.required_body_fields if f not in body]
         if missing:
             raise HTTPException(
                 status_code=422,
@@ -94,6 +100,8 @@ def make_enhance_handler(op: EnhanceOpSpec) -> Callable:
             return HTMLResponse(content=str(result), status_code=op.success_status)
         if op.response_media_type == "application/gzip":
             return Response(content=result if isinstance(result, bytes) else b"", media_type="application/gzip", status_code=op.success_status)
+        if isinstance(result, tuple) and len(result) == 2 and isinstance(result[0], int):
+            return JSONResponse(content=result[1], status_code=result[0])
         return JSONResponse(content=result, status_code=op.success_status)
 
     handler.__name__ = op.operation_id

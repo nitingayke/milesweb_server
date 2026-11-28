@@ -151,6 +151,25 @@ class TestWhmcsActions:
         karan_empty = whmcs_post(client, action="GetClientsProducts", clientid="12349")
         assert karan_empty.json()["products"] == ""
 
+    def test_get_products_catalog_pricing_and_filters(self, client):
+        resp = whmcs_post(client, action="GetProducts")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["result"] == "success"
+        assert body["totalresults"] == 2
+        prods = body["products"]["product"]
+        assert isinstance(prods, list)
+        assert "INR" in prods[0]["pricing"]
+        assert "USD" in prods[0]["pricing"]
+
+        by_pid = whmcs_post(client, action="GetProducts", pid="12").json()
+        assert by_pid["totalresults"] == 1
+        assert by_pid["products"]["product"]["name"] == "Business Hosting"
+
+        empty = whmcs_post(client, action="GetProducts", pid="9999").json()
+        assert empty["totalresults"] == 0
+        assert empty["products"] == ""
+
     def test_get_tickets_and_get_ticket_details(self, client):
         tickets = whmcs_post(client, action="GetTickets", clientid="12345").json()
         assert tickets["totalresults"] == 3

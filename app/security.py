@@ -18,7 +18,7 @@ http_bearer = HTTPBearer(
 def get_current_client_id(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(http_bearer)] = None,
     settings: Settings = Depends(get_settings),
-) -> int:
+) -> int | str:
     """Extract and dynamically verify client ID from Bearer token."""
     if not credentials or not credentials.credentials.strip():
         raise HTTPException(
@@ -28,12 +28,22 @@ def get_current_client_id(
 
     token = credentials.credentials.strip()
 
-    # 1. Attempt dynamic JWT token decode
+    # 1. Attempt dynamic JWT token decode (only allow the enabled Manish account)
     claims = decode_access_token(token, settings=settings)
     if claims:
+        email = str(claims.get("email") or "").strip().lower()
+        org_id = str(claims.get("org_id") or "").strip()
         raw_id = claims.get("clientId") or claims.get("sub")
-        if raw_id is not None and str(raw_id).isdigit():
-            return int(raw_id)
+        if (
+            email == "manish.kulkarni@milesweb.com"
+            and org_id == "3849700e-95b0-4656-be7b-0d1268598bb1"
+            and str(raw_id).strip() == "123"
+        ):
+            return 123
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": "invalid_token", "message": "Token subject is no longer authorized"},
+        )
 
     # 2. Development test tokens fallback (e.g. mock-token-rahul:12345, mock-token-amit:12346)
     for item in settings.phase2_test_tokens.split(","):

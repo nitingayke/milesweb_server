@@ -927,5 +927,69 @@
         ]
       }
     }
+  ],
+  "catalog_products": [
+    {
+      "pid": 10,
+      "gid": 1,
+      "type": "hostingaccount",
+      "module": "enhance",
+      "name": "Shared Hosting",
+      "slug": "shared-hosting",
+      "product-url": "https://www.milesweb.in/hosting/shared-hosting",
+      "description": "SSD NVMe Shared Hosting with free SSL and daily backups.",
+      "paytype": "recurring",
+      "allowqty": 0,
+      "quantity_available": 100,
+      "pricing": {
+        "INR": {
+          "prefix": "₹",
+          "suffix": " INR",
+          "monthly": "149.00",
+          "quarterly": "-1.00",
+          "semiannually": "-1.00",
+          "annually": "1416.00",
+          "biennially": "2600.00",
+          "triennially": "3600.00"
+        },
+        "USD": {
+          "prefix": "$",
+          "suffix": " USD",
+          "monthly": "2.99",
+          "annually": "24.00"
+        }
+      }
+    },
+    {
+      "pid": 12,
+      "gid": 1,
+      "type": "hostingaccount",
+      "module": "enhance",
+      "name": "Business Hosting",
+      "slug": "business-hosting",
+      "product-url": "https://www.milesweb.in/hosting/business-hosting",
+      "description": "High-performance Business Hosting with dedicated resources and staging.",
+      "paytype": "recurring",
+      "allowqty": 0,
+      "quantity_available": 100,
+      "pricing": {
+        "INR": {
+          "prefix": "₹",
+          "suffix": " INR",
+          "monthly": "299.00",
+          "quarterly": "849.00",
+          "semiannually": "1599.00",
+          "annually": "2832.00",
+          "biennially": "5200.00",
+          "triennially": "7200.00"
+        },
+        "USD": {
+          "prefix": "$",
+          "suffix": " USD",
+          "monthly": "4.99",
+          "annually": "48.00"
+        }
+      }
+    }
   ]
 }

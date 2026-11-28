@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     jwt_expires_in_minutes: int = 1440
     mock_whmcs_identifier: str = ""
     mock_whmcs_secret: str = ""
+    dummy_login_password: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

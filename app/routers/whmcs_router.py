@@ -15,6 +15,7 @@ SUPPORTED_ACTIONS = {
     "GetInvoices",
     "GetInvoice",
     "GetClientsProducts",
+    "GetProducts",
     "GetTickets",
     "GetTicket",
 }
@@ -61,6 +62,7 @@ async def whmcs_api(
         "GetInvoices": service.get_invoices,
         "GetInvoice": service.get_invoice,
         "GetClientsProducts": service.get_clients_products,
+        "GetProducts": service.get_products,
         "GetTickets": service.get_tickets,
         "GetTicket": service.get_ticket,
     }

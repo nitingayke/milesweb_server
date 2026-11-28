@@ -192,6 +192,31 @@ class WhmcsService:
             "products": self._quirky_collection("product", page),
         }
 
+    def get_products(self, params: dict[str, str]) -> dict[str, Any]:
+        """Return WHMCS product catalog pricing (separate from GetClientsProducts)."""
+        data = self._load()
+        catalog_products = list(data.get("catalog_products", []))
+
+        pid = self._parse_int(params.get("pid"))
+        if pid is not None:
+            catalog_products = [p for p in catalog_products if p.get("pid") == pid]
+        elif params.get("pid") is not None and str(params.get("pid")).strip() != "":
+            catalog_products = []
+
+        gid = self._parse_int(params.get("gid"))
+        if gid is not None:
+            catalog_products = [p for p in catalog_products if p.get("gid") == gid]
+
+        module = (params.get("module") or "").strip().lower()
+        if module:
+            catalog_products = [p for p in catalog_products if str(p.get("module", "")).lower() == module]
+
+        return {
+            "result": "success",
+            "totalresults": len(catalog_products),
+            "products": self._quirky_collection("product", catalog_products),
+        }
+
     def get_tickets(self, params: dict[str, str]) -> dict[str, Any]:
         data = self._load()
         tickets = list(data.get("tickets", []))

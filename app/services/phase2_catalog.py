@@ -128,10 +128,10 @@ class Phase2Catalog:
 
     def _allowed_domain_ids(self, customer: dict[str, Any]) -> set[str]:
         allowed: set[str] = set()
-        website = customer.get("website")
-        if website:
-            allowed.add(website.get("domainId"))
-            allowed.update(website.get("additionalDomainIds", []))
+        for website in [customer.get("website"), *(customer.get("websites") or [])]:
+            if isinstance(website, dict):
+                allowed.add(website.get("domainId"))
+                allowed.update(website.get("additionalDomainIds", []))
         for domain in customer.get("domains", []):
             if "domainId" in domain:
                 allowed.add(str(domain["domainId"]))
@@ -254,6 +254,8 @@ class Phase2Catalog:
 
         # Identity operations (work for all users, with or without hosting)
         if operation == "getLogin":
+            if state and customer.get("clientId") in state._logins:
+                return state._logins[customer["clientId"]]
             return login
 
         if operation == "getLoginMemberships":
@@ -558,20 +560,43 @@ class Phase2Catalog:
         if operation == "getWebsite":
             return website_item
         if operation == "getWebsiteDomainMappings":
+            if state:
+                site_domains = [
+                    {
+                        "id": d["id"],
+                        "domainId": d["id"],
+                        "websiteId": website["id"],
+                        "domain": d["domain"],
+                        "isPrimary": d.get("mappingKind", "primary") == "primary",
+                        "mappingKind": d.get("mappingKind", "primary"),
+                        "documentRoot": d.get("documentRoot", "/public_html"),
+                    }
+                    for d in state._domains.values()
+                    if d.get("websiteId") == website["id"]
+                ]
+                if site_domains:
+                    return {"total": len(site_domains), "items": site_domains}
             return {"total": 1, "items": [domain]}
         if operation == "getWebsiteDomainMapping":
             target_domain_id = path.get("domain_id", website["domainId"])
-            target_domain = website["domain"]
-            mapping_kind = "primary"
-            if target_domain_id != website.get("domainId"):
-                target_domain = f"extra.{website['domain']}"
-                mapping_kind = "addon"
+            dom_rec = state._domains.get(target_domain_id) if state else None
+            if dom_rec is not None:
+                target_domain = dom_rec.get("domain", website["domain"])
+                mapping_kind = dom_rec.get("mappingKind", "primary")
+                doc_root = dom_rec.get("documentRoot", "/public_html")
+            else:
+                target_domain = website["domain"]
+                mapping_kind = "primary"
+                doc_root = "/public_html"
+                if target_domain_id != website.get("domainId"):
+                    target_domain = f"extra.{website['domain']}"
+                    mapping_kind = "addon"
             return {
                 "domainId": target_domain_id,
                 "websiteId": website["id"],
                 "domain": target_domain,
                 "mappingKind": mapping_kind,
-                "documentRoot": "/public_html",
+                "documentRoot": doc_root,
                 "cert": {
                     "cn": target_domain,
                     "expires": "2027-11-23T00:00:00Z",
@@ -580,7 +605,7 @@ class Phase2Catalog:
                     "sans": [target_domain],
                     "forceHttps": True,
                 },
-                "cloudflareStatus": "Connected",
+                "cloudflareStatus": (dom_rec or {}).get("cloudflareStatus", "Connected"),
                 "cloudflareFriendlyName": "MilesWeb Cloudflare",
                 "cloudflareTokenId": "cf-token-001",
             }
@@ -607,6 +632,12 @@ class Phase2Catalog:
         if operation == "getWebsiteDomainDnsQuery":
             return self._dns_query_response(customer, website, path["domain_id"], query)
         if operation == "getWebsiteDomainSslCert":
+            dom_id = path.get("domain_id", website["domainId"])
+            if state and dom_id in state._ssl_certs:
+                cert = state._ssl_certs[dom_id]
+                if cert is None:
+                    raise CatalogNotFound("No SSL certificate found for this domain")
+                return cert
             return {
                 "cn": website["domain"],
                 "expires": "2027-11-23T00:00:00Z",
@@ -639,7 +670,17 @@ class Phase2Catalog:
             ]
             return {
                 "total": len(apps),
-                "items": [{"id": a["id"], "name": a["name"], "kind": a["kind"], "status": a["status"]} for a in apps],
+                "items": [
+                    {
+                        "id": a["id"],
+                        "name": a["name"],
+                        "kind": a["kind"],
+                        "app": a.get("app", a["kind"]),
+                        "type": a.get("type", a["kind"]),
+                        "status": a["status"],
+                    }
+                    for a in apps
+                ],
             }
         if operation in {"getWordpressInfo", "getWordpressAppVersion", "getWordpressPlugins", "getWordpressThemes"}:
             app_id = path.get("app_id")
@@ -687,17 +728,17 @@ class Phase2Catalog:
             if status_val == "none":
                 status_val = "idle"
             return {
-                "id": 9001,
+                "id": backup_status.get("backupId", 9001),
                 "websiteId": website["id"],
                 "status": status_val,
-                "isRunning": False,
+                "isRunning": status_val in {"running", "started", "in_progress"},
                 "progress": 100 if status_val == "completed" else 0,
-                "startedAt": "2026-11-20T01:00:00Z",
+                "startedAt": backup_status.get("startedAt", "2026-11-20T01:00:00Z"),
                 "step": status_val,
                 "action": "backup",
-                "homeDirStatus": "successful",
-                "mysqlDbsStatus": "successful",
-                "emailsStatus": "successful",
+                "homeDirStatus": backup_status.get("homeDirStatus", "successful"),
+                "mysqlDbsStatus": backup_status.get("mysqlDbsStatus", "successful"),
+                "emailsStatus": backup_status.get("emailsStatus", "successful"),
             }
         if operation == "getWebsiteRestoreStatus":
             b_id = int(path.get("backup_id", 9001))
@@ -706,15 +747,15 @@ class Phase2Catalog:
             if status_val == "none":
                 status_val = "idle"
             return {
-                "backupId": b_id,
+                "backupId": restore_status.get("backupId", b_id),
                 "status": status_val,
                 "progress": 100 if status_val == "completed" else 0,
-                "startedAt": "2026-11-20T01:00:00Z",
-                "finishedAt": "2026-11-20T01:05:00Z",
+                "startedAt": restore_status.get("startedAt", "2026-11-20T01:00:00Z"),
+                "finishedAt": restore_status.get("finishedAt", "2026-11-20T01:05:00Z"),
                 "message": "Backup restoration completed successfully." if status_val == "completed" else "No active restore job.",
-                "homeDirStatus": "successful",
-                "mysqlDbsStatus": "successful",
-                "emailsStatus": "successful",
+                "homeDirStatus": restore_status.get("homeDirStatus", "successful"),
+                "mysqlDbsStatus": restore_status.get("mysqlDbsStatus", "successful"),
+                "emailsStatus": restore_status.get("emailsStatus", "successful"),
             }
         if operation == "getWebsiteEmails":
             emails = website.get("emails")
@@ -780,7 +821,10 @@ class Phase2Catalog:
             mailbox = self._find_mailbox(website, path["email_address"])
             if not mailbox:
                 raise CatalogNotFound("Mailbox not found")
-            return mailbox.get("autoresponder", {"enabled": False, "startDate": None, "endDate": None})
+            ar = mailbox.get("autoresponder")
+            if not ar or (not ar.get("enabled") and not ar.get("id") and not ar.get("subject")):
+                raise CatalogNotFound("Autoresponder not configured for this mailbox")
+            return ar
         if operation == "getFtpUsers":
             items = state._ftp_users.get(website["id"]) if state else None
             if items is None:
@@ -812,7 +856,16 @@ class Phase2Catalog:
                 items = [{"id": "ssh-001", "name": "deployment-key", "fingerprint": "SHA256:mockfingerprint", "createdAt": "2025-06-15T12:00:00Z"}]
             return {"items": items}
         if operation == "getWebsiteGitInfo":
-            return {"repository": "https://git.example/mock/site.git", "branch": "main", "connected": True}
+            if state and website["id"] in state._git_info:
+                return state._git_info[website["id"]]
+            return {
+                "connected": False,
+                "repo": None,
+                "repository": None,
+                "repoOwner": None,
+                "repoName": None,
+                "branch": None,
+            }
         if operation == "getWebsiteGitDeploys":
             deploys = website.get("gitDeployments")
             if deploys is not None:
