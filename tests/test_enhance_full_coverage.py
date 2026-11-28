@@ -15,7 +15,7 @@ from app.services.enhance_spec import (
 
 
 def headers(token: str = "test-token-rahul") -> dict[str, str]:
-    return {"X-Connector-Key": "test-connector-key", "Authorization": f"Bearer {token}"}
+    return {"Authorization": f"Bearer {token}"}
 
 
 RAHUL_PATH_PARAMS = {

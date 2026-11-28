@@ -4,7 +4,7 @@ import pytest
 
 
 def phase2_headers(token: str = "test-token-rahul") -> dict:
-    return {"X-Connector-Key": "test-connector-key", "Authorization": f"Bearer {token}"}
+    return {"Authorization": f"Bearer {token}"}
 
 
 class TestNewBatchEndpoints:

@@ -12,7 +12,7 @@ Claude / ChatGPT
       ▼  MCP protocol
 MCP Server  (milesweb_mcp — deployed on Render)
       │
-      ├──► HTTP  (X-Connector-Key + Bearer token) ──► Enhance & Connector endpoints
+      ├──► HTTP  (Authorization: Bearer <token>) ──► Enhance & Connector endpoints
       │
       └──► POST /includes/api.php (form-encoded username/password) ──► WHMCS mock
       │
@@ -20,7 +20,7 @@ MCP Server  (milesweb_mcp — deployed on Render)
 data/customers.json & data/whmcs.json  (fixture data — never written)
 ```
 
-The MCP server never trusts a raw `clientId` argument from the AI. It derives the customer identity from the verified Bearer JWT and passes it to this service using the shared `CONNECTOR_API_KEY`.
+The MCP server never trusts a raw `clientId` argument from the AI. All customer-scoped Enhance and Connector routes authenticate via the verified Bearer JWT (`Authorization: Bearer <token>`) and enforce tenant isolation from the token identity.
 
 ---
 
@@ -47,6 +47,7 @@ app/
     whmcs_service.py         WHMCS mock billing & support data provider
 data/
   customers.json             users, hosting, and Enhance fixture data
+  mpanel_customers.json      11 mPanel customer fixture records (non-loginable)
   whmcs.json                 WHMCS clients, invoices, products, and tickets
 enhance-api-reference-updated.json  Enhance v12.26.3 OpenAPI reference (500 operations)
 tests/
@@ -74,7 +75,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 Copy-Item .env.example .env
-# Edit .env — set CONNECTOR_API_KEY to a long random secret
+# Edit .env as needed (DUMMY_LOGIN_PASSWORD, JWT_SECRET_KEY, WHMCS mock creds)
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -84,14 +85,11 @@ Browse the full interactive API docs at **http://127.0.0.1:8000/docs**.
 
 | Variable | Purpose |
 | --- | --- |
-| `CONNECTOR_API_KEY` | Shared secret authenticating the MCP server to this backend |
 | `JWT_SECRET_KEY` | HS256 signing key for dynamic access tokens |
+| `DUMMY_LOGIN_PASSWORD` | Password required for `POST /auth/login` (`manish.kulkarni@milesweb.com`) |
 | `PHASE2_TEST_TOKENS` | Comma-separated `token:clientId` pairs for local mock testing without login |
 | `MOCK_WHMCS_IDENTIFIER` | WHMCS API `username` form field accepted by `POST /includes/api.php` |
 | `MOCK_WHMCS_SECRET` | WHMCS API `password` form field accepted by `POST /includes/api.php` |
-
-> [!IMPORTANT]
-> `CONNECTOR_API_KEY` grants access to all customer data. Keep it out of logs, version control, and client-side code. Reference `.env.example` for the required format.
 
 ---
 
@@ -100,11 +98,11 @@ Browse the full interactive API docs at **http://127.0.0.1:8000/docs**.
 | Route group | Required headers |
 | --- | --- |
 | `GET /health` | None |
-| `POST /auth/login` | `Content-Type: application/json` |
+| `POST /auth/login` | `Content-Type: application/json` (`X-Connector-Key` not required; ignored if sent) |
 | `GET /auth/me`, `/auth/verify` | `Authorization: Bearer <token>` |
-| `/api/v1/connector/*` | `X-Connector-Key: <CONNECTOR_API_KEY>` |
-| `/orgs/…`, `/login`, `/v2/…`, `/websites/…` (Phase 2) | **Both:** `X-Connector-Key` + `Authorization: Bearer <token>` |
-| `POST /includes/api.php` (WHMCS mock) | Form fields `username` (`MOCK_WHMCS_IDENTIFIER`) + `password` (`MOCK_WHMCS_SECRET`); no connector key or Bearer |
+| `/api/v1/connector/*` | `Authorization: Bearer <token>` (extra `X-Connector-Key` ignored if sent) |
+| `/orgs/…`, `/login`, `/v2/…`, `/websites/…` (Phase 2) | `Authorization: Bearer <token>` (extra `X-Connector-Key` ignored if sent) |
+| `POST /includes/api.php` (WHMCS mock) | Form fields `username` (`MOCK_WHMCS_IDENTIFIER`) + `password` (`MOCK_WHMCS_SECRET`); no Bearer token |
 
 ---
 
@@ -127,24 +125,22 @@ Browse the full interactive API docs at **http://127.0.0.1:8000/docs**.
 | POST | `/auth/verify` | None | Verify token from request body `{"token": "…"}` |
 | GET | `/auth/verify` | Bearer or `?token=` | Verify token from header or query param |
 
-#### Demo accounts
+#### Enabled login account (`POST /auth/login`)
 
-All six fixture accounts share password `password123`. Passwords are stored as **PBKDF2-SHA256** hashes (stdlib `hashlib`, 260 000 iterations) — no plaintext stored.
+Only one account is enabled for `POST /auth/login` (password read from `DUMMY_LOGIN_PASSWORD` in `.env`):
 
-| Email | Client ID | Enhance Scenario | WHMCS Billing & Support Scenario |
+| Email | Name | Client ID | Customer `org_id` |
 | --- | --- | --- | --- |
-| `rahul@example.com` | `12345` | Active org (`Owner`), 1 website, 2 mailboxes (1 autoresponder on, 1 off), Cloudflare configured + non-configured domain, 2 git deployments (with fake secrets in logs), htaccess rewrites & IP rules, WordPress + Joomla apps, 2 clone jobs (1 with 215-line log), 2 org members | 4 invoices (`Paid`, `Unpaid`, `Overdue`, `Cancelled`), 2 products, 3 tickets (1 multi-reply with staff note & attachment, 1 `Closed`, 1 `Customer-Reply`) |
-| `amit@example.com` | `12346` | Active org (`Owner`), 1 website, 3 domains (1 Pending, 1 Expired), Cloudflare unconfigured, 0 clone jobs | 2 invoices, 1 product (triggers single-object quirk), 1 ticket (triggers single-object quirk) |
-| `priya@example.com` | `12347` | No hosting, no domains (no Enhance org) | 2 invoices, 1 product, 1 ticket (proves WHMCS billing/support works without Enhance) |
-| `neha@example.com` | `12348` | Active org (`Owner`), suspended website, 4 domains, 2 hosting services, Cloudflare pending | 3 invoices, 2 products, 0 tickets (`""` empty quirk) |
-| `karan@example.com` | `12349` | No hosting, 2 domains only | 0 invoices, 0 products, 0 tickets (`""` empty quirk on all lists) |
-| `vikram@example.com` | `12350` | Non-admin member (`SiteAccess`) of Rahul's org (`org-rahul-001`) — receives `403` on `/members` | Not a billing client |
+| `manish.kulkarni@milesweb.com` | `MilesWeb` | `"123"` | `3849700e-95b0-4656-be7b-0d1268598bb1` |
+
+- `data/mpanel_customers.json` stores 11 mPanel customer fixture records (non-loginable).
+- `data/customers.json` still provides Enhance/connector fixture accounts for `PHASE2_TEST_TOKENS` (`mock-token-*`) and WHMCS mock scenarios (`12345`–`12350`), but those emails cannot sign in via `POST /auth/login`.
 
 ```powershell
-# 1. Login and capture the token
+# 1. Login and capture the token (replace <DUMMY_LOGIN_PASSWORD> with the value in .env)
 $resp = curl.exe -s -X POST "http://127.0.0.1:8000/auth/login" `
   -H "Content-Type: application/json" `
-  -d '{"email": "rahul@example.com", "password": "password123"}' | ConvertFrom-Json
+  -d '{"email": "manish.kulkarni@milesweb.com", "password": "<DUMMY_LOGIN_PASSWORD>"}' | ConvertFrom-Json
 $token = $resp.token
 
 # 2. Use the token
@@ -155,26 +151,26 @@ curl.exe -H "Authorization: Bearer $token" "http://127.0.0.1:8000/auth/me"
 
 ### 3. Customer Connector API
 
-The MCP server calls these endpoints with the shared `CONNECTOR_API_KEY`. All endpoints are `GET`-only; `POST`/`PUT`/`DELETE` return `405`.
+These endpoints authenticate via the verified Bearer JWT (`Authorization: Bearer <token>`), derive the caller's `clientId` from the token (and reject any `clientId` query param for a different customer with `403`). All endpoints are `GET`-only; `POST`/`PUT`/`DELETE` return `405`.
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/api/v1/connector/customer?clientId=<id>` | Customer profile (name, email, status) |
-| GET | `/api/v1/connector/customer/hosting-services?clientId=<id>` | Active hosting services |
-| GET | `/api/v1/connector/customer/domains?clientId=<id>` | Registered domains |
+| GET | `/api/v1/connector/customer` | Customer profile (name, email, status) |
+| GET | `/api/v1/connector/customer/hosting-services` | Active hosting services |
+| GET | `/api/v1/connector/customer/domains` | Registered domains |
 
-**Errors:** unknown `clientId` → `404`; missing/invalid connector key → `401`; non-numeric or missing `clientId` → `422`; customer with no hosting/domains → `200` with `{"success": true, "data": []}`.
+**Errors:** missing/invalid token → `401`; mismatched `clientId` query param → `403`; unknown `clientId` → `404`; non-numeric or `<= 0` `clientId` → `422`; customer with no hosting/domains → `200` with `{"success": true, "data": []}`.
 
 ```powershell
-curl.exe -H "X-Connector-Key: your-secret" `
-  "http://127.0.0.1:8000/api/v1/connector/customer?clientId=12345"
+curl.exe -H "Authorization: Bearer $token" `
+  "http://127.0.0.1:8000/api/v1/connector/customer"
 ```
 
 ---
 
 ### 4. Phase 2 — Enhance Mock Operations (42 endpoints)
 
-All 42 Enhance read-only GET operations from the supplied API catalog are implemented. Each request must include **both** `X-Connector-Key` and `Authorization: Bearer <token>`. Every `org_id`, `website_id`, `subscription_id`, `domain_id`, `backup_id`, and `app_id` in the path is validated against the authenticated customer — another customer's resource returns `404`.
+All 42 Enhance read-only GET operations from the supplied API catalog are implemented. Each request requires `Authorization: Bearer <token>` (any extra `X-Connector-Key` header is ignored). Every `org_id`, `website_id`, `subscription_id`, `domain_id`, `backup_id`, and `app_id` in the path is validated against the authenticated customer — another customer's resource returns `404`.
 
 Websites may have multiple domain mapping IDs (primary + additional); **all** are checked during `domain_id` authorization.
 
@@ -226,13 +222,11 @@ Websites may have multiple domain mapping IDs (primary + additional); **all** ar
 ```powershell
 # Using a dynamic JWT token
 curl.exe `
-  -H "X-Connector-Key: your-secret" `
   -H "Authorization: Bearer $token" `
-  "http://127.0.0.1:8000/orgs/org-rahul-001/websites/site-rahul-001"
+  "http://127.0.0.1:8000/orgs/3849700e-95b0-4656-be7b-0d1268598bb1"
 
 # Or using a static test token (local dev only)
 curl.exe `
-  -H "X-Connector-Key: your-secret" `
   -H "Authorization: Bearer mock-token-rahul" `
   "http://127.0.0.1:8000/orgs/org-rahul-001/websites/site-rahul-001"
 ```
@@ -242,7 +236,7 @@ curl.exe `
 
 #### Additional Enhance GET Operations (16 endpoints)
 
-These 16 endpoints follow the same `X-Connector-Key` + `Authorization: Bearer <token>` authentication and tenant isolation rules (another customer's resource returns `404`), plus resource-specific rules: `email_address` must belong to the website, `deployment_id` must belong to the website, `clone_id` must belong to the org, `getMembers` returns `403` unless the caller's role is `Owner` or `Admin`/`SuperAdmin` (while `getMember` allows `Owner`/`Admin` or the member themself), and `getJoomlaInfo` returns `400` if the `app_id` is not Joomla.
+These 16 endpoints follow the same `Authorization: Bearer <token>` authentication and tenant isolation rules (another customer's resource returns `404`), plus resource-specific rules: `email_address` must belong to the website, `deployment_id` must belong to the website, `clone_id` must belong to the org, `getMembers` returns `403` unless the caller's role is `Owner` or `Admin`/`SuperAdmin` (while `getMember` allows `Owner`/`Admin` or the member themself), and `getJoomlaInfo` returns `400` if the `app_id` is not Joomla.
 
 | Operation name | Path | Proposed MCP tool |
 | --- | --- | --- |
@@ -277,14 +271,12 @@ These 16 endpoints follow the same `X-Connector-Key` + `Authorization: Bearer <t
 ```powershell
 # Create a website, then list websites to see it
 curl.exe -X POST "http://127.0.0.1:8000/orgs/org-rahul-001/websites" `
-  -H "X-Connector-Key: your-secret" `
   -H "Authorization: Bearer mock-token-rahul" `
   -H "Content-Type: application/json" `
   -d '{"domain":"newsite.example","subscriptionId":5001}'
 
 # Add a DNS record (201), then read the DNS zone
 curl.exe -X POST "http://127.0.0.1:8000/orgs/org-rahul-001/websites/site-rahul-001/domains/domain-rahul-001/dns-zone/records" `
-  -H "X-Connector-Key: your-secret" `
   -H "Authorization: Bearer mock-token-rahul" `
   -H "Content-Type: application/json" `
   -d '{"kind":"TXT","name":"_dmarc","value":"v=DMARC1; p=none","ttl":300}'
@@ -307,6 +299,7 @@ Simulates the WHMCS external API using `application/x-www-form-urlencoded` `POST
 | `GetClientsProducts` | `clientid`, `limitstart`, `limitnum`, `serviceid` | `list_purchased_products` | Includes `username`, `password`, `dedicatedip`, `customfields` (for MCP to strip) |
 | `GetTickets` | `clientid`, `limitstart`, `limitnum`, `status` | `list_support_tickets` | Includes `userid` on each row; returns `""` when empty, single object when 1 row |
 | `GetTicket` | `ticketid`, `repliessort` | `get_ticket_details` | Returns `userid`, `c`, `attachments`, `replies.reply` with `admin` & `note` flags |
+| `GetProducts` | `pid`, `gid`, `module` | — | Returns `products.product` catalog list |
 
 Any other or missing `action` returns `{"result":"error","message":"Invalid or missing action"}`.
 
@@ -333,8 +326,8 @@ Any other or missing `action` returns `{"result":"error","message":"Invalid or m
 .\.venv\Scripts\python.exe -m pytest -v
 ```
 
-**667 tests** covering:
-- Login with valid / invalid credentials (including non-admin member `vikram@example.com`)
+**682 tests** covering:
+- Single-user login (`manish.kulkarni@milesweb.com`), rejection of invalid/other accounts and old Chinmay JWTs, and 11 mPanel customer fixtures
 - Dynamic JWT creation, verification, and expiry
 - `/auth/me` and both `/auth/verify` variants
 - Connector key authentication on all three connector endpoints
@@ -361,11 +354,11 @@ Any other or missing `action` returns `{"result":"error","message":"Invalid or m
 | Customer connector API (3 endpoints) | ✅ Complete |
 | All 58 Phase 2 Enhance mock operations (42 base + 16 extra) | ✅ Complete |
 | All 440 remaining Enhance operations (`enhance_router.py`, 498 / 500 spec total; auth endpoints excluded) | ✅ Complete |
-| WHMCS mock API (`POST /includes/api.php`, 6 actions) | ✅ Complete |
+| WHMCS mock API (`POST /includes/api.php`, 7 actions) | ✅ Complete |
 | Tenant isolation & org role enforcement (`403` for non-admin members) | ✅ Complete |
 | Multi-domain ownership enforcement | ✅ Complete |
 | PBKDF2 password hashing | ✅ Complete |
-| 667 tests — all passing | ✅ Complete |
+| 682 tests — all passing | ✅ Complete |
 | OpenAPI docs at `/docs` | ✅ Complete |
 | Static test token fallback for local dev | ✅ Complete |
 
@@ -398,13 +391,11 @@ The Health Report implementation is entirely in `milesweb_mcp/app/mcp_server.py`
 import os
 import httpx
 
-def get_customer_profile(auth_context: dict) -> dict:
+def get_customer_profile(backend_jwt: str) -> dict:
     """Example: how the MCP server calls this backend."""
-    client_id = auth_context["client_id_whmcs"]  # from verified JWT — never from AI input
     response = httpx.get(
         "http://127.0.0.1:8000/api/v1/connector/customer",
-        headers={"X-Connector-Key": os.environ["CONNECTOR_API_KEY"]},
-        params={"clientId": client_id},
+        headers={"Authorization": f"Bearer {backend_jwt}"},
         timeout=10.0,
     )
     response.raise_for_status()

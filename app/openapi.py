@@ -25,24 +25,16 @@ def install_openapi_security(app: FastAPI) -> None:
         security_schemes["BearerAuth"] = {
             "type": "http",
             "scheme": "bearer",
-            "bearerFormat": "Opaque token",
-            "description": "Bearer token already verified by the MCP authentication flow.",
-        }
-        security_schemes["ConnectorKeyAuth"] = {
-            "type": "apiKey",
-            "in": "header",
-            "name": "X-Connector-Key",
-            "description": "Shared connector key for the trusted MCP service.",
+            "bearerFormat": "JWT",
+            "description": "Bearer JWT issued by POST /auth/login (or configured dev test token).",
         }
 
         for path, path_item in schema.get("paths", {}).items():
             for operation in path_item.values():
                 if not isinstance(operation, dict):
                     continue
-                if "Phase 2 Enhance mock" in operation.get("tags", []):
-                    # One requirement object means both schemes are required.
-                    operation["security"] = [{"BearerAuth": [], "ConnectorKeyAuth": []}]
-                elif path == "/auth/me":
+                tags = operation.get("tags", [])
+                if "Phase 2 Enhance mock" in tags or "Customer connector" in tags or path == "/auth/me":
                     operation["security"] = [{"BearerAuth": []}]
                     if "parameters" in operation:
                         operation["parameters"] = [

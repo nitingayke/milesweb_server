@@ -4,7 +4,7 @@ import pytest
 
 
 def headers(token: str = "test-token-rahul") -> dict[str, str]:
-    return {"X-Connector-Key": "test-connector-key", "Authorization": f"Bearer {token}"}
+    return {"Authorization": f"Bearer {token}"}
 
 
 ALL_16_RAHUL_PATHS = [
@@ -43,7 +43,7 @@ def test_all_16_endpoints_cross_customer_returns_404(client, path):
 def test_all_16_endpoints_missing_headers_returns_401(client, path):
     assert client.get(path).status_code == 401
     assert client.get(path, headers={"X-Connector-Key": "test-connector-key"}).status_code == 401
-    assert client.get(path, headers={"Authorization": "Bearer test-token-rahul"}).status_code == 401
+    assert client.get(path, headers={"Authorization": "Bearer test-token-rahul"}).status_code == 200
 
 
 POST_SUPPORTED_IN_ENHANCE_SPEC = {

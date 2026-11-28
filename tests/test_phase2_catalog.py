@@ -2,7 +2,7 @@ from app.routers.phase2_router import OPERATIONS, router
 
 
 def headers(token: str = "test-token-rahul"):
-    return {"X-Connector-Key": "test-connector-key", "Authorization": f"Bearer {token}"}
+    return {"Authorization": f"Bearer {token}"}
 
 
 def test_all_42_phase2_get_routes_are_registered_and_respond(client):
@@ -54,10 +54,14 @@ def test_customer_cannot_access_another_customers_resources(client):
     assert client.get("/orgs/org-rahul-001/websites/site-amit-001", headers=headers()).status_code == 404
 
 
-def test_phase2_requires_both_credentials(client):
+def test_phase2_requires_bearer_token_and_ignores_connector_key(client):
     assert client.get("/login").status_code == 401
     assert client.get("/login", headers={"X-Connector-Key": "test-connector-key"}).status_code == 401
-    assert client.get("/login", headers={"Authorization": "Bearer test-token-rahul"}).status_code == 401
+    assert client.get("/login", headers={"Authorization": "Bearer test-token-rahul"}).status_code == 200
+    assert client.get(
+        "/login",
+        headers={"Authorization": "Bearer test-token-rahul", "X-Connector-Key": "arbitrary-key"},
+    ).status_code == 200
 
 
 def test_phase2_routes_are_get_only(client):
@@ -73,21 +77,15 @@ def test_swagger_declares_ftp_path_inputs(client):
     }
 
 
-def test_swagger_declares_both_phase2_authentication_schemes(client):
+def test_swagger_declares_bearer_auth_without_connector_key(client):
     schema = client.get("/openapi.json").json()
     schemes = schema["components"]["securitySchemes"]
-    assert schemes["BearerAuth"] == {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "Opaque token",
-        "description": "Bearer token already verified by the MCP authentication flow.",
-    }
-    assert schemes["ConnectorKeyAuth"]["type"] == "apiKey"
-    assert schemes["ConnectorKeyAuth"]["in"] == "header"
-    assert schemes["ConnectorKeyAuth"]["name"] == "X-Connector-Key"
+    assert "ConnectorKeyAuth" not in schemes
+    assert schemes["BearerAuth"]["type"] == "http"
+    assert schemes["BearerAuth"]["scheme"] == "bearer"
 
     ftp_operation = schema["paths"]["/orgs/{org_id}/websites/{website_id}/ftp/users"]["get"]
-    assert ftp_operation["security"] == [{"BearerAuth": [], "ConnectorKeyAuth": []}]
+    assert ftp_operation["security"] == [{"BearerAuth": []}]
     assert not {(parameter["name"], parameter["in"]) for parameter in ftp_operation["parameters"]} & {
         ("authorization", "header"),
         ("X-Connector-Key", "header"),

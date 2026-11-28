@@ -1,13 +1,12 @@
 """Mock implementation of the Phase 2 Enhance read-only GET API catalog."""
 
-import hmac
 import re
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from app.config import Settings, get_settings
+from app.security import get_current_client_id
 from app.services.phase2_catalog import (
     CatalogBadRequest,
     CatalogForbidden,
@@ -15,48 +14,15 @@ from app.services.phase2_catalog import (
     Phase2Catalog,
     catalog,
 )
-from app.services.token_service import decode_access_token
 
 router = APIRouter(tags=["Phase 2 Enhance mock"])
 
 
-def parse_test_tokens(value: str) -> dict[str, int]:
-    """Parse opaque development token mappings without logging their values."""
-    mappings: dict[str, int] = {}
-    for item in value.split(","):
-        token, separator, client_id = item.strip().partition(":")
-        if separator and token and client_id.isdigit():
-            mappings[token] = int(client_id)
-    return mappings
-
-
 def authenticated_client(
-    authorization: str | None = Header(default=None, include_in_schema=False),
-    connector_key: str | None = Header(default=None, alias="X-Connector-Key", include_in_schema=False),
-    settings: Settings = Depends(get_settings),
+    client_id: int | str = Depends(get_current_client_id),
 ) -> int:
-    """Require the MCP bearer identity and the server-to-server connector key."""
-    if not connector_key or not settings.connector_api_key or not hmac.compare_digest(connector_key, settings.connector_api_key):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    scheme, _, bearer_token = (authorization or "").partition(" ")
-    if scheme.lower() != "bearer" or not bearer_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-
-    client_id: int | None = None
-    # 1. Dynamically verify and decode token as signed JWT
-    claims = decode_access_token(bearer_token, settings=settings)
-    if claims:
-        raw_id = claims.get("clientId") or claims.get("sub")
-        if raw_id is not None and str(raw_id).isdigit():
-            client_id = int(raw_id)
-
-    # 2. Fallback to static test tokens for backwards compatibility
-    if client_id is None:
-        client_id = parse_test_tokens(settings.phase2_test_tokens).get(bearer_token)
-
-    if client_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return client_id
+    """Require a verified Bearer JWT (or configured dev test token); ignore X-Connector-Key."""
+    return int(client_id)
 
 
 def get_catalog() -> Phase2Catalog:

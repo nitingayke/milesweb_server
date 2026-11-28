@@ -2659,6 +2659,39 @@
       ],
       "subscription": null,
       "website": null
+    },
+    {
+      "clientId": 123,
+      "name": "MilesWeb",
+      "email": "manish.kulkarni@milesweb.com",
+      "status": "Active",
+      "hostingServices": [],
+      "domains": [],
+      "login": {
+        "id": "a0d029e4-7ac8-488b-a768-1912f24f6117",
+        "email": "manish.kulkarni@milesweb.com",
+        "name": "MilesWeb",
+        "colorCode": "#2563eb",
+        "registeredAt": "2025-05-29T11:26:50.843523Z",
+        "authMethod": "basic",
+        "locale": "en"
+      },
+      "organization": {
+        "id": "3849700e-95b0-4656-be7b-0d1268598bb1",
+        "parentId": "148d9193-102b-4a3e-acde-fe22dfa311d9",
+        "name": "MilesWeb",
+        "status": "active",
+        "owner": "MilesWeb",
+        "ownerEmail": "manish.kulkarni@milesweb.com",
+        "ownerId": "e24372f4-debb-48d6-b13b-5a8658da23ce",
+        "ownerLoginId": "a0d029e4-7ac8-488b-a768-1912f24f6117",
+        "subscriptionsCount": 2,
+        "websitesCount": 2,
+        "locale": "en",
+        "createdAt": "2025-05-29T11:26:50.843523Z"
+      },
+      "subscription": null,
+      "website": null
     }
   ]
 }

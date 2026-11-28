@@ -22,7 +22,7 @@ from app.customer_repository import CustomerRepository
 # ---------------------------------------------------------------------------
 
 def phase2_headers(token: str = "test-token-rahul") -> dict:
-    return {"X-Connector-Key": "test-connector-key", "Authorization": f"Bearer {token}"}
+    return {"Authorization": f"Bearer {token}"}
 
 
 # ---------------------------------------------------------------------------
@@ -56,7 +56,7 @@ class TestKaranNoHosting:
         """Karan has domain registrations even without hosting."""
         response = client.get(
             "/api/v1/connector/customer/domains?clientId=12349",
-            headers={"X-Connector-Key": "test-connector-key"},
+            headers=phase2_headers("test-token-karan"),
         )
         assert response.status_code == 200
         assert len(response.json()["data"]) == 2
@@ -64,7 +64,7 @@ class TestKaranNoHosting:
     def test_karan_connector_hosting_services_empty(self, client):
         response = client.get(
             "/api/v1/connector/customer/hosting-services?clientId=12349",
-            headers={"X-Connector-Key": "test-connector-key"},
+            headers=phase2_headers("test-token-karan"),
         )
         assert response.status_code == 200
         assert response.json()["data"] == []
